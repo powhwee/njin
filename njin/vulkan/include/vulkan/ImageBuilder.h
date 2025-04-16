@@ -10,9 +10,9 @@
 
 namespace njin::vulkan {
     /**
-* Builder for a VkImage
-* One-time use only. Use a new builder for each image
-*/
+    * Builder for a VkImage
+    * One-time use only. Use a new builder for each image
+    */
     class ImageBuilder {
         public:
         ImageBuilder(const PhysicalDevice& physical_device,

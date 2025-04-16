@@ -5,8 +5,7 @@ set(SOURCES
     src/MeshBuilder.cpp
     src/loader.cpp
     src/RenderBuffer.cpp
-    src/njTexture.cpp
-    src/RenderQueue.cpp)
+    src/njTexture.cpp)
 
 add_library(core STATIC ${SOURCES})
 target_include_directories(core PUBLIC include)

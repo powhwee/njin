@@ -4,19 +4,18 @@
 
 namespace njin::core {
     njVertex::njVertex(const njVertexCreateInfo& info) :
-        position_{ info.position.has_value() ? info.position.value() :
+        position{ info.position.has_value() ? info.position.value() :
                                                math::njVec3f{} },
-        normal_{ info.normal.has_value() ? info.normal.value() :
+        normal{ info.normal.has_value() ? info.normal.value() :
                                            math::njVec3f{} },
-        tangent_{ info.tangent.has_value() ? info.tangent.value() :
+        tangent{ info.tangent.has_value() ? info.tangent.value() :
                                              math::njVec4f{} },
-        tex_coord_{ info.tex_coord.has_value() ? info.tex_coord.value() :
+        tex_coord{ info.tex_coord.has_value() ? info.tex_coord.value() :
                                                  math::njVec2f{} },
-        color_{ info.color.has_value() ? info.color.value() :
+        color{ info.color.has_value() ? info.color.value() :
                                          math::njVec4<uint16_t>{} } {}
 
-    njVertex::njVertex(const math::njVec3f& position) : position_{position} {
-    }
+    njVertex::njVertex(const math::njVec3f& position) : position{ position } {}
 
     VkVertexInputBindingDescription njVertex::get_binding_description() {
         VkVertexInputBindingDescription binding_description{
@@ -34,35 +33,35 @@ namespace njin::core {
             .location = 0,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(njVertex, position_)
+            .offset = offsetof(njVertex, position)
         };
 
         VkVertexInputAttributeDescription normal{
             .location = 1,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(njVertex, normal_)
+            .offset = offsetof(njVertex, normal)
         };
 
         VkVertexInputAttributeDescription tangent{
             .location = 2,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(njVertex, tangent_)
+            .offset = offsetof(njVertex, tangent)
         };
 
         VkVertexInputAttributeDescription tex_coord{
             .location = 3,
             .binding = 0,
             .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(njVertex, tex_coord_)
+            .offset = offsetof(njVertex, tex_coord)
         };
 
         VkVertexInputAttributeDescription color{
             .location = 4,
             .binding = 0,
             .format = VK_FORMAT_R16G16B16A16_UNORM,
-            .offset = offsetof(njVertex, color_)
+            .offset = offsetof(njVertex, color)
         };
 
         return { position, normal, tangent, tex_coord, color };

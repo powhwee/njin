@@ -1,10 +1,11 @@
 #pragma once
 
+#include "vulkan/CommandBuffer.h"
 #include "vulkan/LogicalDevice.h"
 
 namespace njin::vulkan {
     class CommandPool {
-    public:
+        public:
         /**
          * Constructor
          * @param device Logical device to create the command pool on
@@ -21,12 +22,14 @@ namespace njin::vulkan {
 
         CommandPool& operator=(const CommandPool&& other) = delete;
 
+        CommandBuffer allocate_buffer(VkCommandBufferLevel level);
+
         ~CommandPool();
 
         VkCommandPool get() const;
 
-    private:
-        const VkDevice device_{ VK_NULL_HANDLE };
+        private:
+        const LogicalDevice* device_;
         VkCommandPool command_pool_{ VK_NULL_HANDLE };
     };
-}
+}  // namespace njin::vulkan

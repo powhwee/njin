@@ -1,11 +1,12 @@
 #include "vulkan/ShaderModule.h"
 
 #include <format>
-
-#include "glslang/Public/ShaderLang.h"
 #include <fstream>
 #include <iostream>
+
 #include <vulkan/spirv.h>
+
+#include "glslang/Public/ShaderLang.h"
 
 namespace {
     using namespace njin::vulkan;
@@ -23,9 +24,9 @@ namespace {
      * @param stage GLSL shader stage this shader is for
      * @return VkShaderModuleCreateInfo
      */
-    VkShaderModuleCreateInfo make_shader_module_create_info(
-        const std::string& shader_path,
-        glslang_stage_t stage);
+    VkShaderModuleCreateInfo
+    make_shader_module_create_info(const std::string& shader_path,
+                                   glslang_stage_t stage);
 
     std::string read_file(const std::string& filename) {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -36,7 +37,7 @@ namespace {
 
         // since the position started at the end the current position is
         // the file size
-        size_t file_size{ (size_t) file.tellg() };
+        size_t file_size{ (size_t)file.tellg() };
 
         // set back to beginning and start to read
         file.seekg(0, std::ios::beg);
@@ -48,19 +49,14 @@ namespace {
         return result;
     }
 
-
-    VkShaderModuleCreateInfo make_shader_module_create_info(
-        const std::string& shader_path,
-        glslang_stage_t stage) {
+    VkShaderModuleCreateInfo
+    make_shader_module_create_info(const std::string& shader_path,
+                                   glslang_stage_t stage) {
         const std::string source{ read_file(shader_path) };
 
-
-        SpirVBinary code{
-            compileShaderToSPIRV_Vulkan(stage,
-                                        source.data(),
-                                        shader_path.data())
-        };
-
+        SpirVBinary code{ compileShaderToSPIRV_Vulkan(stage,
+                                                      source.data(),
+                                                      shader_path.data()) };
 
         VkShaderModuleCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -72,8 +68,7 @@ namespace {
 
         return info;
     }
-}
-
+}  // namespace
 
 namespace njin::vulkan {
     ShaderModule::ShaderModule(const LogicalDevice& device,
@@ -84,14 +79,14 @@ namespace njin::vulkan {
         // find corresponding glslang_stage_t; glslang compiler needs this info
         glslang_stage_t glslang_stage{};
         switch (stage_) {
-            case VK_SHADER_STAGE_VERTEX_BIT:
-                glslang_stage = GLSLANG_STAGE_VERTEX;
-                break;
-            case VK_SHADER_STAGE_FRAGMENT_BIT:
-                glslang_stage = GLSLANG_STAGE_FRAGMENT;
-                break;
-            default:
-                throw std::runtime_error("Shader module stage not supported");
+        case VK_SHADER_STAGE_VERTEX_BIT:
+            glslang_stage = GLSLANG_STAGE_VERTEX;
+            break;
+        case VK_SHADER_STAGE_FRAGMENT_BIT:
+            glslang_stage = GLSLANG_STAGE_FRAGMENT;
+            break;
+        default:
+            throw std::runtime_error("Shader module stage not supported");
         }
 
         const VkShaderModuleCreateInfo info{
@@ -103,8 +98,32 @@ namespace njin::vulkan {
         }
     }
 
+    ShaderModule::ShaderModule(ShaderModule&& other) {
+        device_ = other.device_;
+        shader_module_ = other.shader_module_;
+        stage_ = other.stage_;
+        entry_point_ = other.entry_point_;
+
+        other.device_ = VK_NULL_HANDLE;
+        other.shader_module_ = VK_NULL_HANDLE;
+    }
+
+    ShaderModule& ShaderModule::operator=(ShaderModule&& other) {
+        device_ = other.device_;
+        shader_module_ = other.shader_module_;
+        stage_ = other.stage_;
+        entry_point_ = other.entry_point_;
+
+        other.device_ = VK_NULL_HANDLE;
+        other.shader_module_ = VK_NULL_HANDLE;
+
+        return *this;
+    }
+
     ShaderModule::~ShaderModule() {
-        vkDestroyShaderModule(device_, shader_module_, nullptr);
+        if (shader_module_ != VK_NULL_HANDLE) {
+            vkDestroyShaderModule(device_, shader_module_, nullptr);
+        }
     }
 
     VkShaderModule ShaderModule::get() const {
@@ -118,4 +137,4 @@ namespace njin::vulkan {
     const char* ShaderModule::get_entry_point() const {
         return entry_point_.data();
     }
-}
+}  // namespace njin::vulkan

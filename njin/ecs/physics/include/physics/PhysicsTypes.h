@@ -44,5 +44,6 @@ namespace njin::ecs::physics {
         }
     };
 
+    // Bounding box coordinates are in world space
     using Primitive = std::pair<EntityId, BoundingBox>;
 }  // namespace njin::ecs::physics

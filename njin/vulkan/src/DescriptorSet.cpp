@@ -144,6 +144,10 @@ namespace njin::vulkan {
         return descriptor_set_;
     }
 
+    const VkDescriptorSet* DescriptorSet::get_handle_address() const {
+        return &descriptor_set_;
+    }
+
     DescriptorSet::DescriptorSet(DescriptorSet&& other) noexcept :
         descriptor_set_{ other.descriptor_set_ },
         buffers_{ std::move(other.buffers_) } {

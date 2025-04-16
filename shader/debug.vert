@@ -38,10 +38,6 @@ vec3 srgb_to_linear(vec3 srgb_color) {
 void main() {
     mat4 model = models[index.i].model;
     gl_Position = transpose(vp.projection) * transpose(vp.view) * transpose(model) * vec4(position, 1.0);
-    if (gl_VertexIndex == 1) {
-        printf("Position: %f, %f, %f", position.x, position.y, position.z);
-        printf("Colour: %f, %f, %f", color.x, color.y, color.z);
-    }
     frag_color = color;
     frag_tex_coord = tex_coord;
 }

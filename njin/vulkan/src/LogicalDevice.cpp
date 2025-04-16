@@ -57,6 +57,7 @@ namespace {
         // enable features we want
         VkPhysicalDeviceFeatures features{};
         features.samplerAnisotropy = VK_TRUE;
+        features.fillModeNonSolid = VK_TRUE;
 
         return info;
     }
@@ -112,16 +113,29 @@ namespace njin::vulkan {
 
         QueueFamilyIndices indices{ physical_device.get_indices() };
         auto queue_create_infos{ make_queue_create_infos(indices) };
-        VkDeviceCreateInfo create_info{
-            make_device_create_info(physical_device,
-                                    queue_create_infos,
-                                    physical_device_extensions)
+
+        // enable features we want
+        VkPhysicalDeviceFeatures features{
+            .fillModeNonSolid = VK_TRUE,
+            .samplerAnisotropy = VK_TRUE,
         };
 
-        if (vkCreateDevice(physical_device.get(),
-                           &create_info,
-                           nullptr,
-                           &device_)) {
+        VkDeviceCreateInfo info{
+            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .queueCreateInfoCount =
+            static_cast<uint32_t>(queue_create_infos.size()),
+            .pQueueCreateInfos = queue_create_infos.data(),
+            .enabledLayerCount = 0,
+            .ppEnabledLayerNames = nullptr,
+            .enabledExtensionCount =
+            static_cast<uint32_t>(physical_device_extensions.size()),
+            .ppEnabledExtensionNames = physical_device_extensions.data(),
+            .pEnabledFeatures = &features,
+        };
+
+        if (vkCreateDevice(physical_device.get(), &info, nullptr, &device_)) {
             throw std::runtime_error("Failed to create logical device");
         }
 

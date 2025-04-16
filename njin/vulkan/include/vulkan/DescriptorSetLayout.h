@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "LogicalDevice.h"
+#include "vulkan/config.h"
 
 namespace njin::vulkan {
     /**
@@ -45,6 +46,7 @@ namespace njin::vulkan {
 
     class DescriptorSetLayout {
         public:
+        DescriptorSetLayout() = default;
         /**
          * Constructor
          * @param device Logical device
@@ -55,6 +57,17 @@ namespace njin::vulkan {
         const VkDescriptorSetLayoutCreateInfo& info,
         const std::unordered_map<std::string, DescriptorSetBindingSettings>&
         bindings);
+
+        /**
+         * Constructor
+         * @param device Logical device
+         * @param info VkDescriptorSetLayoutCreateInfo
+         */
+        DescriptorSetLayout(const LogicalDevice& device,
+                            const VkDescriptorSetLayoutCreateInfo& info);
+
+        DescriptorSetLayout(const LogicalDevice& device,
+                            const SetLayoutInfo& info);
         DescriptorSetLayout(const DescriptorSetLayout&) = delete;
         DescriptorSetLayout& operator=(const DescriptorSetLayout&) = delete;
         DescriptorSetLayout(DescriptorSetLayout&& other) noexcept;

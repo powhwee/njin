@@ -18,7 +18,7 @@ namespace njin::ecs {
 
     /**
      * The transform of an entity, following a right-handed coordinate
-     * system where
+     * system
      */
     struct njTransformComponent {
         static njTransformComponent make(float x, float y, float z) {

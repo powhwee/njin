@@ -5,6 +5,8 @@
 
 #include <vulkan/util.h>
 
+#include "vulkan/CommandPool.h"
+
 namespace njin::vulkan {
     Image::Image(const LogicalDevice& device,
                  const PhysicalDevice& physical_device,
@@ -153,8 +155,10 @@ namespace njin::vulkan {
                                   .layerCount = 1 }
         };
         CommandPool pool{ *device_, graphics_index };
-        CommandBuffer command_buffer{ *device_, pool };
-        command_buffer.begin();
+        CommandBuffer command_buffer{
+            pool.allocate_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+        };
+        command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
         vkCmdPipelineBarrier(command_buffer.get(),
                              src_stage_mask,
                              dst_stage_mask,
@@ -165,6 +169,7 @@ namespace njin::vulkan {
                              nullptr,
                              1,
                              &barrier);
+        CommandBufferSubmitInfo end_info{ .should_wait_idle = true };
         command_buffer.end();
         current_layout_ = new_layout;
     }
@@ -174,7 +179,9 @@ namespace njin::vulkan {
             physical_device_->get_graphics_family_index()
         };
         CommandPool pool{ *device_, graphics_index };
-        CommandBuffer command_buffer{ *device_, pool };
+        CommandBuffer command_buffer{
+            pool.allocate_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+        };
         VkBufferImageCopy region{
             .bufferOffset = 0,
             .bufferRowLength = 0,
@@ -186,13 +193,15 @@ namespace njin::vulkan {
             .imageOffset = { 0, 0, 0 },
             .imageExtent = info_.extent
         };
-        command_buffer.begin();
+        command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
         vkCmdCopyBufferToImage(command_buffer.get(),
                                buffer.get(),
                                image_,
                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                1,
                                &region);
+
+        CommandBufferSubmitInfo end_info{ .should_wait_idle = true };
         command_buffer.end();
     }
 }  // namespace njin::vulkan

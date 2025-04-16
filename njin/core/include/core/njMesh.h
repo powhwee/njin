@@ -29,7 +29,11 @@ namespace njin::core {
          */
         int get_size() const;
 
-        int get_vertex_count() const;
+        /**
+         * Get the total number of vertices in the mesh across all primitives
+         * @return Number of vertices
+         */
+        uint32_t get_vertex_count() const;
 
         private:
         std::vector<njPrimitive> primitives_{};

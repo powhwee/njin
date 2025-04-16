@@ -33,6 +33,8 @@ namespace njin::vulkan {
         DescriptorSet() = default;
         VkDescriptorSet get() const;
 
+        const VkDescriptorSet* get_handle_address() const;
+
         DescriptorSet(const DescriptorSet&) = delete;
         DescriptorSet& operator=(const DescriptorSet&) = delete;
         DescriptorSet(DescriptorSet&& other) noexcept;
