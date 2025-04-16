@@ -30,7 +30,6 @@ add_subdirectory(core)
 add_subdirectory(math)
 add_subdirectory(util)
 add_subdirectory(vulkan)
-add_subdirectory(input)
 add_subdirectory(runtime)
 add_subdirectory(ecs)
 add_subdirectory(mnt)
@@ -46,7 +45,6 @@ target_link_libraries(njin PRIVATE
                       glslang
                       math
                       core
-                      input
                       ecs
                       util
                       mnt

@@ -4,7 +4,6 @@
 
 #include "core/RenderQueue.h"
 #include "core/loader.h"
-#include "core/njSceneReader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
 #include "ecs/njArchetype.h"
@@ -16,7 +15,6 @@
 #include "ecs/njPlayerArchetype.h"
 #include "ecs/njRenderSystem.h"
 #include "ecs/njSceneGraphSystem.h"
-#include "input/EventHandler.h"
 #include "math/njVec3.h"
 #include "mnt/RoomBuilder.h"
 #include "vulkan/CommandBuffer.h"

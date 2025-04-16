@@ -2,7 +2,6 @@
 
 #include <core/MeshBuilder.h>
 
-#include "core/njCamera.h"
 #include "util/GLTFAsset.h"
 #include "util/json.h"
 #include "util/stb.h"
@@ -43,34 +42,6 @@ namespace njin::core {
 
             core::njMesh mesh{ mesh_builder.build() };
             mesh_registry.add(name, mesh);
-        }
-    }
-
-    void load_cameras(const std::string& path,
-                      njRegistry<njCamera>& camera_registry) {
-        rj::Document document{
-            njin::util::make_validated_document("schema/cameras.schema.json",
-                                                path)
-        };
-
-        rj::GenericArray cameras{ document["cameras"].GetArray() };
-        for (const auto& rj_camera : cameras) {
-            std::string name{ rj_camera["name"].GetString() };
-            const float far{ rj_camera["far"].GetFloat() };
-            const float near{ rj_camera["near"].GetFloat() };
-            const float horizontal_fov{ rj_camera["horizontalFov"].GetFloat() };
-            const int width{ rj_camera["width"].GetInt() };
-            const int height{ rj_camera["height"].GetInt() };
-
-            njCamera::njCameraSettings settings{
-                .far = far,
-                .near = near,
-                .horizontal_fov = horizontal_fov,
-                .width = width,
-                .height = height
-            };
-            njCamera camera{ name, settings };
-            camera_registry.add(name, camera);
         }
     }
 

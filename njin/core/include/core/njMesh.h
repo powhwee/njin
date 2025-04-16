@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 
-#include "core/njNode.h"
 #include "core/njPrimitive.h"
 #include "core/njVertex.h"
 

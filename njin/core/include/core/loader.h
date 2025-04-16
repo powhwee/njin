@@ -1,5 +1,4 @@
 #pragma once
-#include "core/njCamera.h"
 #include "core/njMesh.h"
 #include "core/njRegistry.h"
 #include "core/njTexture.h"
@@ -14,14 +13,6 @@ namespace njin::core {
  */
     void load_meshes(const std::string& path,
                      njRegistry<njMesh>& mesh_registry);
-
-    /**
- * Loads cameras specified in a .meshes file into a given mesh registry
- * @param path Path to .cameras file
- * @param camera_registry Camera registry to populate
- */
-    void load_cameras(const std::string& path,
-                      njRegistry<njCamera>& camera_registry);
 
     /**
    * Loads textures specified in a .textures file into a given texture registry
