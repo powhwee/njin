@@ -1,0 +1,31 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": ".nj project file",
+    "description": "Mesh registry",
+    "type": "object",
+    "properties": {
+        "meshes": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/mesh"
+            }
+        }
+    },
+    "definitions": {
+        "mesh": {
+            "type": "object",
+            "description": "A single mesh in the registry",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Unique name to refer to this mesh by"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Relative path to the .glb file for this mesh"
+
+                }
+            }
+        }
+    }
+}

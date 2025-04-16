@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Node registry",
+    "description": "Node definitions for registration in node registry",
+    "type": "object",
+    "nodes": {
+        "type": "array",
+        "items": {
+            "$ref": "#/definitions/node"
+        }
+    },
+    "definitions": {
+        "node": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "njName for this node"
+                }
+            },
+            "required": ["name"]
+        }
+    }
+}

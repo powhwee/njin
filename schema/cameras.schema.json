@@ -1,0 +1,40 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Camera definitions",
+    "description": "Camera definitions for loading into global camera registry",
+    "type": "object",
+    "cameras": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "description": "definition of a single camera",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "unique name for this camera"
+                },
+                "near": {
+                    "type": "number",
+                    "description": "z-coordinate of near plane"
+                },
+                "far": {
+                    "type": "number",
+                    "description": "z-coordinate of far plane"
+                },
+                "horizontalFov": {
+                    "type": "number",
+                    "description": "angle of horizontal fov in degrees"
+                },
+                "width" : {
+                    "type" : "integer",
+                    "description" : "width of screen"
+                },
+                "height" : {
+                    "type" : "integer",
+                    "description" : "height of screen"
+                }
+            },
+            "required": ["name", "near", "far", "horizontalFov", "width", "height"]
+        }
+    }
+}

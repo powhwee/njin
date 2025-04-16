@@ -1,0 +1,12 @@
+{
+    "cameras": [
+        {
+            "name": "perspective",
+            "near": -1,
+            "far": -10,
+            "horizontalFov": 60,
+            "width": 1920,
+            "height": 1080
+        }
+    ]
+}

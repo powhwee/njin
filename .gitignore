@@ -1,0 +1,12 @@
+# build artifacts
+dist/
+temp/
+build/
+texture/
+
+# temp files
+*.bkp
+*.dtmp
+
+# ide configurations
+.idea/

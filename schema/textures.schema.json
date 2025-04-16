@@ -1,0 +1,32 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Texture files",
+    "description": "List of texture files and their locations",
+    "type": "object",
+    "properties": {
+        "textures": {
+            "type": "array",
+            "description": "array of textures",
+            "items": {
+                "$ref": "#/definitions/texture"
+            }
+        }
+    },
+    "definitions": {
+        "texture": {
+            "type": "object",
+            "description": "a single texture image",
+            "properties": {
+                "name": {
+                    "description": "Unique name for this texture",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Path to texture",
+                    "type": "string"
+                }
+            },
+            "required": ["name", "path"]
+        }
+    }
+}

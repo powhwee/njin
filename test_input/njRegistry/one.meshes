@@ -1,0 +1,12 @@
+{
+    "meshes": [
+        {
+            "name": "cube",
+            "path": "njRegistry/cube.glb"
+        },
+        {
+            "name": "sphere",
+            "path": "njRegistry/sphere.glb"
+        }
+    ]
+}

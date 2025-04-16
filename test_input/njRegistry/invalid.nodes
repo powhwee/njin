@@ -1,0 +1,11 @@
+{
+    "meshes": {
+        "name": "cube",
+        "path": "cube.glb"
+    },
+{
+    "name": "sphere",
+    "path": "sphere.glb"
+}
+]
+}

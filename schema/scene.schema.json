@@ -1,0 +1,100 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Scene hierarchy",
+    "description": "Hierarchical representation of a single level",
+    "type": "object",
+    "properties": {
+        "nodes": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Node hierarchy description",
+            "items": {
+                "$ref": "#/definitions/node"
+            }
+        },
+        "meshes": {
+            "type": "array",
+            "description": "Array of meshes used in this scene",
+            "items": {
+                "$ref": "#/definitions/mesh"
+            }
+        },
+        "cameras": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Array of cameras in this scene",
+            "items": {
+                "$ref": "#/definitions/camera"
+            }
+        }
+    },
+    "required": ["nodes", "cameras"],
+    "definitions": {
+        "node": {
+            "type": "object",
+            "description": "A node in the scene",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/njName",
+                    "description": "Unique name for this node from the node registry"
+
+                },
+                "transform": {
+                    "type": "array",
+                    "description": "Local transform of this object as a 4x4 row-major matrix",
+                    "items": {
+                        "type": "array",
+                        "description": "One row of the transform matrix",
+                        "items": {
+                            "type": "integer",
+                            "description": "One element of the transform matrix"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                },
+                "parent": {
+                    "$ref": "#/definitions/njName",
+                    "description": "Name of parent node"
+                }
+            },
+            "required": ["name", "transform"]
+        },
+        "mesh": {
+            "type": "object",
+            "description": "Mesh",
+            "properties": {
+                "mesh": {
+                    "type": "string",
+                    "description": "Name of the mesh"
+                },
+                "node": {
+                    "$ref": "#/definitions/njName",
+                    "description": "Name of node this mesh references"
+                }
+            },
+            "required": ["mesh", "node"]
+        },
+        "camera": {
+            "type": "object",
+            "description": "Camera",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the camera"
+                },
+                "node": {
+                    "$ref": "#/definitions/njName",
+                    "description": "Name of node this camera references"
+                }
+            },
+            "required": ["name", "node"]
+        },
+        "njName": {
+            "type": "string",
+            "description": "Unique identifier for things in njin"
+        }
+    }
+}
