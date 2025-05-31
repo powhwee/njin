@@ -4,7 +4,6 @@
 #include <unordered_map>
 
 namespace njin::vulkan {
-
     DescriptorSetLayout::DescriptorSetLayout(
     const LogicalDevice& device,
     const VkDescriptorSetLayoutCreateInfo& info,
@@ -17,6 +16,43 @@ namespace njin::vulkan {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
         discover_pool_sizes(info);
+    }
+
+    DescriptorSetLayout::DescriptorSetLayout(
+    const LogicalDevice& device,
+    const VkDescriptorSetLayoutCreateInfo& info) :
+        device_{ device.get() } {
+        if (vkCreateDescriptorSetLayout(device_, &info, nullptr, &layout_) !=
+            VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
+    }
+
+    DescriptorSetLayout::DescriptorSetLayout(const LogicalDevice& device,
+                                             const SetLayoutInfo& info) :
+        device_{ device.get() } {
+        // gather all the bindings into an array
+        std::vector<SetLayoutBindingInfo> binding_infos{ info.binding_infos };
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+        for (const SetLayoutBindingInfo& binding_info : binding_infos) {
+            bindings.push_back(binding_info.binding);
+        }
+
+        // make the VkDescriptorSetLayout
+        VkDescriptorSetLayoutCreateInfo create_info{
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .bindingCount = static_cast<uint32_t>(bindings.size()),
+            .pBindings = bindings.data()
+        };
+
+        if (vkCreateDescriptorSetLayout(device_,
+                                        &create_info,
+                                        nullptr,
+                                        &layout_) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
     }
 
     DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout&&

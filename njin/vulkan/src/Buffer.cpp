@@ -6,7 +6,7 @@
 #include <vulkan/DescriptorSetLayoutBuilder.h>
 #include <vulkan/util.h>
 
-#include "vulkan/Renderer.h"
+#include "vulkan/Renderer_DEPRECATE.h"
 
 namespace {
     using namespace njin::vulkan;

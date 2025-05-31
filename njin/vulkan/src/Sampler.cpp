@@ -1,5 +1,6 @@
 #include "vulkan/Sampler.h"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace njin::vulkan {

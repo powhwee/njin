@@ -2,8 +2,7 @@
 
 #include <numbers>
 
-#include <assert.h>
-
+#include "core/Types.h"
 #include "ecs/Components.h"
 
 namespace njin::ecs {
@@ -185,15 +184,14 @@ namespace njin::ecs {
             auto mesh{ std::get<njMeshComponent*>(view) };
             auto transform{ std::get<njTransformComponent*>(view) };
             // global transform = local transform for entities with no parent
-            core::Renderable renderable{
-                .global_transform = transform->transform,
-                .mesh_name = mesh->mesh,
-                .texture_name = mesh->texture
-            };
+            core::MeshData data{ .global_transform = transform->transform,
+                                 .mesh_name = mesh->mesh };
+            core::Renderable renderable{ .type = RenderType::Mesh,
+                                         .data = data };
             renderables.push_back(renderable);
         }
 
-        // colliders
+        // colliders are drawn as wireframes
         auto colliders{
             entity_manager.get_views<njPhysicsComponent, njTransformComponent>()
         };
@@ -201,6 +199,9 @@ namespace njin::ecs {
             auto physics_comp{ std::get<njPhysicsComponent*>(view) };
             auto transform_comp{ std::get<njTransformComponent*>(view) };
             njCollider collider{ physics_comp->current_collider };
+            // global transform of the collider
+            // the collider's transform is relative to the njTransformComponent
+            // of the entity
             math::njMat4f transform{ transform_comp->transform *
                                      collider.transform };
             math::njVec3f centroid{ collider.transform.get_translation_part() };
@@ -210,30 +211,13 @@ namespace njin::ecs {
                                collider.y_width,
                                collider.z_width)
             };
+            core::WireframeData data{ .global_transform = transform,
+                                      .line_list = line_list };
 
-            core::Renderable renderable{
-                .type = core::RenderableType::Wireframe,
-                .global_transform = transform,
-                .line_list = line_list
-            };
+            core::Renderable renderable{ .type = RenderType::Wireframe,
+                                         .data = data };
 
             renderables.push_back(renderable);
-        }
-
-        // meshes with parent entities
-        auto meshes_parents{ entity_manager.get_views<njMeshComponent,
-                                                      njTransformComponent,
-                                                      njParentComponent>() };
-        for (const auto& [entity, view] : meshes_parents) {
-            auto mesh{ std::get<njMeshComponent*>(view) };
-            auto transform{ std::get<njTransformComponent*>(view) };
-            auto parent{ std::get<njParentComponent*>(view) };
-
-            math::njMat4f current_transform{ transform->transform };
-
-            // TODO: implement
-            // there needs to be some way to query the entity manager
-            // for whether an entity possesses some component
         }
 
         buffer_->replace(renderables);

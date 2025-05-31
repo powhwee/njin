@@ -1,8 +1,17 @@
 #pragma once
+#include <vulkan/vulkan_core.h>
 
-#include "vulkan/CommandPool.h"
+#include "vulkan/LogicalDevice.h"
 
 namespace njin::vulkan {
+    struct CommandBufferSubmitInfo {
+        std::vector<VkSemaphore> wait_semaphores{};
+        std::vector<VkPipelineStageFlags> wait_stages{};
+        std::vector<VkSemaphore> signal_semaphores{};
+        VkFence signal_fence{ VK_NULL_HANDLE };
+        bool should_wait_idle{ false };
+    };
+
     /**
      * Wrapper over VkCommandBuffer. Do not reuse the same command buffer.
      */
@@ -10,11 +19,11 @@ namespace njin::vulkan {
         public:
         /**
          * Constructor
-         * @param device Logical device to allocate this command buffer on
-         * @param command_pool Command pool to allocate a command buffer from
+         * @param device Logical device that owns this command buffer
+         * @param command_buffer Handle to existing command buffer
          */
         CommandBuffer(const LogicalDevice& device,
-                      const CommandPool& command_pool);
+                      VkCommandBuffer command_buffer);
 
         CommandBuffer(const CommandBuffer& other) = delete;
 
@@ -28,13 +37,17 @@ namespace njin::vulkan {
 
         /**
        * Begin recording commands
+       * @param usage Command buffer usage flags
        */
-        void begin();
+        void begin(VkCommandBufferUsageFlags usage,
+                   VkCommandBufferInheritanceInfo inheritance_info = {});
 
         /**
        * Stop recording and submit the buffer
        */
         void end();
+
+        void submit(const CommandBufferSubmitInfo& submit_info);
 
         VkCommandBuffer* get_handle_address();
 

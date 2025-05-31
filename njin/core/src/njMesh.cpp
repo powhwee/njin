@@ -37,7 +37,7 @@ namespace njin::core {
         return vertices.size() * sizeof(njVertex);
     }
 
-    int njMesh::get_vertex_count() const {
+    uint32_t njMesh::get_vertex_count() const {
         return primitives_.size() * 3;
     }
 

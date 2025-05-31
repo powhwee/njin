@@ -60,7 +60,6 @@ namespace njin::vulkan {
         info.surface = surface.get();
 
         // double buffer at minimum
-        //info.minImageCount = capabilities.minImageCount + 1;
         info.minImageCount = 2;
 
         // use the image format our selected surface format specifies

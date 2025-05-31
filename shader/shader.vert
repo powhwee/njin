@@ -4,14 +4,9 @@
 
 // inputs
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec4 tangent;
-layout (location = 3) in vec2 tex_coord;
-layout (location = 4) in vec4 color;
 
 // outputs
 layout (location = 0) out vec4 frag_color;
-layout (location = 1) out vec2 frag_tex_coord;
 
 // model matrix
 layout (set = 0, binding = 0) readonly buffer Model {
@@ -38,6 +33,5 @@ vec3 srgb_to_linear(vec3 srgb_color) {
 void main() {
     mat4 model = models[index.i].model;
     gl_Position = transpose(vp.projection) * transpose(vp.view) * transpose(model) * vec4(position, 1.0);
-    frag_color = color;
-    frag_tex_coord = tex_coord;
+    frag_color = vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -18,6 +18,16 @@ namespace njin::vulkan {
         DescriptorPool(const LogicalDevice& device,
                        const PhysicalDevice& physical_device,
                        const VkDescriptorPoolCreateInfo& info);
+
+        /**
+         * Constructor. The constructed pool will be large enough to
+         * allocate all given descriptor sets at once.
+         * @param device Logical device
+         * @param set_layout_infos SetLayoutInfos
+         *
+         */
+        DescriptorPool(const LogicalDevice& device,
+                       const std::vector<SetLayoutInfo>& set_layout_infos);
         DescriptorPool(const DescriptorPool&) = delete;
         DescriptorPool& operator=(const DescriptorPool&) = delete;
         DescriptorPool(DescriptorPool&&) noexcept;

@@ -2,7 +2,8 @@
 #include <ranges>
 #include <thread>
 
-#include "core/RenderQueue.h"
+#include <vulkan/image_setup.h>
+
 #include "core/loader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
@@ -17,18 +18,23 @@
 #include "ecs/njSceneGraphSystem.h"
 #include "math/njVec3.h"
 #include "mnt/RoomBuilder.h"
+#include "vulkan/AttachmentImages.h"
 #include "vulkan/CommandBuffer.h"
 #include "vulkan/DescriptorPoolBuilder.h"
 #include "vulkan/DescriptorSetLayoutBuilder.h"
+#include "vulkan/DescriptorSets.h"
 #include "vulkan/GraphicsPipelineBuilder.h"
 #include "vulkan/ImageBuilder.h"
 #include "vulkan/PhysicalDevice.h"
 #include "vulkan/PipelineLayoutBuilder.h"
-#include "vulkan/RenderPassBuilder.h"
+#include "vulkan/RenderResources.h"
 #include "vulkan/Renderer.h"
 #include "vulkan/SamplerBuilder.h"
 #include "vulkan/ShaderModule.h"
+#include "vulkan/VertexBuffers.h"
 #include "vulkan/Window.h"
+#include "vulkan/config.h"
+#include "vulkan/include/vulkan/RenderInfos.h"
 #include "vulkan/pipeline_setup.h"
 #include "vulkan/util.h"
 
@@ -38,7 +44,6 @@ using namespace njin::vulkan;
 using namespace njin;
 
 constexpr int MAX_LIGHTS = 10;
-constexpr int MAX_OBJECTS = 100;
 
 namespace {
     /**
@@ -324,319 +329,67 @@ int main() {
     Surface surface{ instance, window };
     PhysicalDevice physical_device{ instance, surface };
     LogicalDevice logical_device{ physical_device };
+
     Swapchain swapchain{ logical_device, physical_device, surface };
+
+    RenderResourceInfos resource_infos{
+        .attachment_images = { ATTACHMENT_IMAGE_INFO_DEPTH },
+        .set_layouts = { DESCRIPTOR_SET_LAYOUT_INFO_MVP },
+        .render_passes = { RENDER_PASS_INFO_MAIN },
+        .pipelines = { PIPELINE_INFO_MAIN_DRAW },
+        .vertex_buffers = { VERTEX_BUFFER_INFO_MAIN_DRAW }
+    };
+
+    RenderResources resources{ logical_device,
+                               physical_device,
+                               swapchain,
+                               resource_infos };
+    Renderer renderer{ logical_device,
+                       physical_device,
+                       swapchain,
+                       RENDERER_INFO,
+                       resources };
 
     // prepare meshes from .meshes file
     core::njRegistry<core::njMesh> mesh_registry{};
     load_meshes("main.meshes", mesh_registry);
-    std::vector<std::pair<std::string, const core::njMesh*>> meshes{};
-    for (auto [name, mesh] : mesh_registry.get_map()) {
-        meshes.push_back({ name, mesh });
-    }
-
-    BufferSettings vertex_buffer_settings{
-        .size = calculate_meshes_size(mesh_registry),
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-    };
-    Buffer vertex_buffer{ logical_device,
-                          physical_device,
-                          vertex_buffer_settings };
-    load_into_vertex_buffer(meshes, vertex_buffer);
-
-    BufferSettings debug_buffer_settings{
-        .size = sizeof(core::njVertex) * 2,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-    };
-
-    Buffer debug_buffer{ logical_device,
-                         physical_device,
-                         debug_buffer_settings };
-    math::njVec3f v0{ 0.f, 0.f, 0.f };
-    math::njVec3f v1{ -100.f, 100.f, -100.f };
-    math::njVec3f v2{ 0.f, 20.f, 0.f };
-    // std::vector<core::njVertex> line_vertices{ v0, v1 };
-    // debug_buffer.load(line_vertices);
-
-    MeshIndices mesh_indices{ make_mesh_indices(meshes) };
-
-    // prepare textures from .textures file
-    core::njRegistry<core::njTexture> texture_registry{};
-    load_textures("main.textures", texture_registry);
-
-    std::vector<std::pair<std::string, Image>> texture_images{
-        make_texture_images(physical_device, logical_device, texture_registry)
-    };
-    std::vector<ImageView> image_views{ make_image_views(logical_device,
-                                                         texture_images) };
-    TextureIndices texture_indices{ make_texture_indices(texture_images) };
-
-    SamplerBuilder sampler_builder{ logical_device };
-    Sampler sampler{ sampler_builder.build() };
-
-    /** make the descriptor sets */
-    // make the set layouts
-    DescriptorSetLayoutBuilder set_layout_builder{ &logical_device };
-
-    DescriptorSetLayout set_0_layout{ make_set_0_layout(set_layout_builder) };
-    DescriptorSetLayout set_1_layout{ make_set_1_layout(set_layout_builder) };
-    DescriptorSetLayout set_2_layout{
-        make_set_2_layout(set_layout_builder, image_views, sampler)
-    };
-
-    // build a descriptor pool that can support all the set layouts we want
-    DescriptorPoolBuilder pool_builder{ logical_device, physical_device };
-    pool_builder.add_descriptor_set_layout(set_0_layout);
-    pool_builder.add_descriptor_set_layout(set_1_layout);
-    pool_builder.add_descriptor_set_layout(set_2_layout);
-
-    DescriptorPool descriptor_pool{ pool_builder.build() };
-
-    // allocate the descriptor sets
-    DescriptorSet set_0{
-        descriptor_pool.allocate_descriptor_set(set_0_layout)
-    };
-    DescriptorSet set_1{
-        descriptor_pool.allocate_descriptor_set(set_1_layout)
-    };
-    DescriptorSet set_2{
-        descriptor_pool.allocate_descriptor_set(set_2_layout)
-    };
-
-    // store in one array
-    std::vector<DescriptorSet> descriptor_sets{};
-    descriptor_sets.push_back(std::move(set_0));
-    descriptor_sets.push_back(std::move(set_1));
-    descriptor_sets.push_back(std::move(set_2));
-
-    /** pipeline layout */
-    PipelineLayoutBuilder pipeline_layout_builder{ logical_device };
-
-    VkPushConstantRange model_index{ .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-                                     .offset = 0,
-                                     .size = sizeof(uint32_t) };
-
-    VkPushConstantRange texture_index{
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .offset = sizeof(uint32_t),  // the first uint32_t was the model index
-        .size = sizeof(uint32_t)
-    };
-
-    pipeline_layout_builder.add_push_constant_range(model_index);
-    pipeline_layout_builder.add_push_constant_range(texture_index);
-
-    pipeline_layout_builder.add_descriptor_set_layout(set_0_layout);
-    pipeline_layout_builder.add_descriptor_set_layout(set_1_layout);
-    pipeline_layout_builder.add_descriptor_set_layout(set_2_layout);
-
-    PipelineLayout pipeline_layout{ pipeline_layout_builder.build() };
-
-    /** render pass */
-    RenderPassBuilder render_pass_builder(logical_device);
-
-    render_pass_builder.add_attachment_description(
-    "color",
-    { .flags = 0,
-      .format = swapchain.get_image_format(),
-      .load_op = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .store_op = VK_ATTACHMENT_STORE_OP_STORE,
-      .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-      .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .initial_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR });
-
-    AttachmentReference color_attachment_reference{
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT
-    };
-
-    // depth attachment
-    render_pass_builder.add_attachment_description(
-    "depth",
-    { .flags = 0,
-      .format = VK_FORMAT_D32_SFLOAT,
-      .load_op = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-      .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .initial_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
-
-    AttachmentReference depth_attachment_reference{
-        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        .aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT
-    };
-
-    std::vector<std::pair<AttachmentId, AttachmentReference>> color_attachments{
-        { "color", color_attachment_reference }
-    };
-    std::pair<AttachmentId, AttachmentReference> depth_attachment{
-        "depth",
-        depth_attachment_reference
-    };
-
-    render_pass_builder
-    .add_subpass_description("zero",
-                             { .flags = 0,
-                               .input_attachments = {},
-                               .color_attachments = color_attachments,
-                               .depth_attachment = depth_attachment });
-
-    RenderPass render_pass{ render_pass_builder.build() };
-
-    /** main graphics pipeline */
-    GraphicsPipelineBuilder pipeline_builder{ logical_device,
-                                              render_pass,
-                                              pipeline_layout };
-
-    /** shader modules */
-    ShaderModule vertex_shader_module{ logical_device,
-                                       SHADER_DIR "/shader.vert",
-                                       VK_SHADER_STAGE_VERTEX_BIT };
-    ShaderModule fragment_shader_module{ logical_device,
-                                         SHADER_DIR "/shader.frag",
-                                         VK_SHADER_STAGE_FRAGMENT_BIT };
-    pipeline_builder.add_shader_stage(vertex_shader_module);
-    pipeline_builder.add_shader_stage(fragment_shader_module);
-
-    /** vertex input */
-    pipeline_builder.add_vertex_input_binding_description(
-    core::njVertex::get_binding_description());
-
-    std::vector<VkVertexInputAttributeDescription> attribute_descriptions{
-        core::njVertex::get_attribute_descriptions()
-    };
-
-    for (const auto& description : attribute_descriptions) {
-        pipeline_builder.add_vertex_attribute_description(description);
-    }
-
-    pipeline_builder
-    .set_primitive_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-
-    GraphicsPipelineBuilder::RasterizationSettings rasterization_settings{
-        .polygon_mode = VK_POLYGON_MODE_FILL,
-        .cull_mode = VK_CULL_MODE_NONE,
-        .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-    };
-
-    pipeline_builder.set_rasterization_state(rasterization_settings);
-
-    std::vector<VkDynamicState> dynamic_states{ VK_DYNAMIC_STATE_VIEWPORT,
-                                                VK_DYNAMIC_STATE_SCISSOR };
-    pipeline_builder.set_dynamic_state(dynamic_states);
-
-    GraphicsPipeline main_pipeline{ pipeline_builder.build() };
-
-    // debug pipeline
-    GraphicsPipeline debug_pipeline{
-        make_debug_pipeline(logical_device, render_pass, pipeline_layout)
-    };
-
-    core::RenderBuffer render_buffer{};
-
-    core::RenderQueue render_queue{ mesh_indices,
-                                    texture_indices,
-                                    render_buffer };
-
-    Renderer renderer{ physical_device, logical_device, swapchain,
-                       render_pass,     main_pipeline,  debug_pipeline,
-                       descriptor_sets, vertex_buffer,  debug_buffer };
 
     // initialize engine and add all the systems we want
     ecs::njEngine engine{};
-
     bool should_run{ true };
     engine.add_system(std::make_unique<ecs::njInputSystem>(should_run));
     engine.add_system(std::make_unique<ecs::njMovementSystem>());
+    core::RenderBuffer render_buffer{};
     engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
-    engine.add_system(std::make_unique<ecs::njPhysicsSystem>());
-    // engine.add_system(std::make_unique<ecs::njSceneGraphSystem>());
 
-    // player
-    ecs::njInputComponent input{};
-    ecs::njTransformComponent transform{
-        ecs::njTransformComponent::make(0, 10, 0)
-    };
-    ecs::njMovementIntentComponent intent{};
-    ecs::njCollider player_collider{
-        .transform = { math::njMat4Type::Translation, { 0.f, 0.f, 0.f } },
-        .x_width = 2.f,
-        .y_width = 2.f,
-        .z_width = 2.f
-    };
-    ecs::njPhysicsComponent physics{ .velocity = { 0.f, 0.f, 0.f },
-                                     .force = { 0, -10, 0 },
-                                     .mass = 1,
-                                     .collider = player_collider,
-                                     .type = ecs::RigidBodyType::Dynamic };
-    ecs::njPlayerArchetypeCreateInfo player_info{
-        .name = "player",
-        .transform = transform,
-        .input = input,
-        .mesh = { .mesh = "monkey", .texture = "pusheen" },
-        .intent = intent,
-        .physics = physics,
-    };
-
-    math::njMat4f cam_transform{ math::njMat4Type::Translation,
-                                 { 20, 20, 20 } };
-    ecs::njPlayerArchetype player{ player_info };
-    ecs::EntityId player_id{ engine.add_archetype(player) };
-
-    // camera
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = { cam_transform },
-        .camera = { .up = { 0, 1, 0 },
-                    .look_at = { 0, 0, 0 },
-                    .far = 1000,
-                    .near = 1,
-                    .horizontal_fov = 60,
-                    .width = 1920,
-                    .height = 1080 }
+        .transform = ecs::njTransformComponent::make(10.f, 20.f, 10.f),
+        .camera = { .up = { 0.f, 1.f, 0.f },
+                    .look_at = { 0.f, 0.f, 0.f },
+                    .far = { 200.f },
+                    .near = { 1.f },
+                    .horizontal_fov = { 90.f },
+                    .width = 1280,
+                    .height = 720 }
     };
+    ecs::njCameraArchetype camera_archetype{ camera_info };
+    engine.add_archetype(camera_archetype);
 
-    ecs::njCameraArchetype camera{ camera_info };
-
-    ecs::EntityId camera_id{ engine.add_archetype(camera) };
-
-    // mnt::RoomBuilder builder{ 8, { 0, 0, 0 }, *mesh_registry.get("cube") };
-    // auto tiles{ builder.build() };
-    // for (const auto& tile : tiles) {
-    //     engine.add_archetype(tile);
-    // }
-
-    ecs::njTransformComponent floor_transform{
-        .transform = { math::njMat4Type::Translation, { 0.f, 0.f, 0.f } }
+    ecs::njObjectArchetypeCreateInfo object_info{
+        .name = "cube",
+        .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
+        .mesh = "cube"
     };
-    ecs::njObjectArchetypeCreateInfo floor_info{
-        .name = "floor",
-        .transform = floor_transform,
-        .mesh = { .mesh = "flat_room", .texture = "pusheen" }
-    };
+    ecs::njObjectArchetype object_archetype{ object_info };
+    engine.add_archetype(object_archetype);
 
-    ecs::njObjectArchetype floor{ floor_info };
-    ecs::EntityId floor_id{ engine.add_archetype(floor) };
-    ecs::njCollider floor_collider{
-        .transform = { math::njMat4Type::Translation, { 0.f, 0.f, 0.f } },
-        .x_width = 20.f,
-        .y_width = 2.f,
-        .z_width = 2.f
-    };
-    ecs::njPhysicsComponent floor_physics{ .mass = 100.f,
-                                           .collider = floor_collider,
-                                           .type = ecs::RigidBodyType::Static };
-    engine.add_component(floor_id, floor_physics);
-
-    std::vector<DescriptorSet*> descriptor_set_handles{};
-    for (auto& set : descriptor_sets) {
-        descriptor_set_handles.push_back(&set);
-    }
     while (should_run) {
         engine.update();
-
-        render_queue.serialize(descriptor_set_handles);
-
+        vulkan::RenderInfos render_queue{ mesh_registry,
+                                          resources,
+                                          render_buffer };
         renderer.draw_frame(render_queue);
+        return 0;
     }
 }

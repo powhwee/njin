@@ -47,12 +47,11 @@ namespace njin::core {
          */
         static size_t get_size();
 
-        private:
-        math::njVec3f position_{};
-        math::njVec3f normal_{};
-        math::njVec4f tangent_{};
-        math::njVec2f tex_coord_{};
-        math::njVec4<uint16_t> color_{};
+        math::njVec3f position{};
+        math::njVec3f normal{};
+        math::njVec4f tangent{};
+        math::njVec2f tex_coord{};
+        math::njVec4<uint16_t> color{};
     };
 
     static_assert(std::is_standard_layout_v<njVertex>,

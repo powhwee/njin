@@ -5,7 +5,7 @@
 
 namespace njin::vulkan {
     class ShaderModule {
-    public:
+        public:
         /**
          * Constructor
          * @param device Logical device
@@ -20,9 +20,9 @@ namespace njin::vulkan {
 
         ShaderModule& operator=(const ShaderModule& other) = delete;
 
-        ShaderModule(ShaderModule&& other) = delete;
+        ShaderModule(ShaderModule&& other);
 
-        ShaderModule& operator=(ShaderModule&& other) = delete;
+        ShaderModule& operator=(ShaderModule&& other);
 
         ~ShaderModule();
 
@@ -38,17 +38,16 @@ namespace njin::vulkan {
          */
         VkShaderStageFlagBits get_stage() const;
 
-
         /**
          * Get the name of the entry point method for this modulle
          * @return Name of entry point method
          */
         const char* get_entry_point() const;
 
-    private:
+        private:
         VkDevice device_{ VK_NULL_HANDLE };
         VkShaderModule shader_module_{ VK_NULL_HANDLE };
         VkShaderStageFlagBits stage_;
         std::string entry_point_{ "main" };
     };
-}
+}  // namespace njin::vulkan
