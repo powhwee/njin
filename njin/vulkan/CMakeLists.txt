@@ -49,7 +49,6 @@ add_library(vulkan STATIC ${SOURCES})
 target_include_directories(vulkan PUBLIC include)
 target_link_libraries(vulkan PRIVATE
                       Vulkan::Vulkan
-                      glm::glm
                       SDL3::SDL3
                       math
                       core)

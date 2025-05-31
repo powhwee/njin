@@ -1,6 +1,5 @@
 
 # Packages
-find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(Stb REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
@@ -90,5 +89,13 @@ add_custom_target(copy_textures
                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${TEXTURE_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/texture"
                   COMMENT "Copying ${TEXTURE_DIR} to ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 add_dependencies(njin copy_textures)
+
+# copy meshes
+set(MESH_DIR ${CMAKE_SOURCE_DIR}/mesh)
+add_custom_target(copy_meshes
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${MESH_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mesh"
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/main.meshes" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+                  COMMENT "Copying ${MESH_DIR} to ${MESH_DIR}")
+add_dependencies(njin copy_meshes)
 
 

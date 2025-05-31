@@ -1,0 +1,8 @@
+{
+    "meshes" : [
+        {
+        "name" : "cube",
+        "path" : "mesh/cube.glb"
+        }
+    ]
+}
