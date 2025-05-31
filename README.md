@@ -95,20 +95,21 @@ In ```Components.h``` (can be anywhere else):
 
 ```
 struct MovementComponent {
-float x;
-float y;
-float z;
-float velocity;
+    float x;
+    float y;
+    float z;
+    float velocity;
 }
 ```
+
+struct HealthComponent {
+int max_health;
+int current_health;
+}
 
 In ```main.cpp```
 
 ```
-struct HealthComponent {
-    int max_health;
-    int current_health;
-}
 njEntityManager entity_manager{};
 EntityId id{entity_manager.add_entity()}; // entity 0
 
@@ -146,5 +147,4 @@ movement->velocity = 20.f; // entity 0 is now moving at 20 units/s
 git clone git@github.com:jinruishi/njin.git folder-name
 cd folder-name
 cmake -S . -B build && cmake --build build
-
 ```
