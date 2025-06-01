@@ -1,4 +1,6 @@
 #pragma once
+#include <variant>
+
 #include "core/njMesh.h"
 #include "ecs/EngineTypes.h"
 #include "math/njMat4.h"
@@ -58,19 +60,43 @@ namespace njin::ecs {
         EntityId id;  // entity id of parent
     };
 
+    /// Camera ///
+    enum class njCameraType {
+        Perspective,
+        Orthographic,
+    };
+
+    /**
+     * Perspective camera settings
+     * @param near Distasnce from camera to near plane
+     * @param far Distance from camera to far plane
+     * @param horizontal_fov Horizontal fov of camera, in degrees
+     * @param aspect Width/height aspect ratio
+     */
+    struct PerspectiveCameraSettings {
+        float near{ 0 };
+        float far{ 0 };
+        float horizontal_fov{ 0 };
+    };
+
+    struct OrthographicCameraSettings {
+        float near{};
+        float far{};
+        float scale{};
+    };
+
     /**
      * Attaches a camera to an entity
      * The camera uses the entity's location
      */
     struct njCameraComponent {
+        njCameraType type{ njCameraType::Perspective };
         math::njVec3f up{};  // up vector of camera
         // point in global space the camera is looking at
         math::njVec3f look_at{};
-        float far{ 0 };
-        float near{ 0 };
-        float horizontal_fov{ 0 };
-        int width{ 0 };   // near plane width
-        int height{ 0 };  // near plane height
+        float aspect{};
+        std::variant<PerspectiveCameraSettings, OrthographicCameraSettings>
+        settings;
     };
 
     // A general bounding box. Not a component in itself, but used as

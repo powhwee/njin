@@ -362,16 +362,17 @@ int main() {
     core::RenderBuffer render_buffer{};
     engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
 
+    ecs::OrthographicCameraSettings camera_settings{ .near = { 1.f },
+                                                     .far = { 1000.f },
+                                                     .scale = { 10 } };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = ecs::njTransformComponent::make(10.f, 20.f, 10.f),
-        .camera = { .up = { 0.f, 1.f, 0.f },
+        .transform = ecs::njTransformComponent::make(10.f, 15.f, 10.f),
+        .camera = { .type = ecs::njCameraType::Orthographic,
+                    .up = { 0.f, 1.f, 0.f },
                     .look_at = { 0.f, 0.f, 0.f },
-                    .far = { 200.f },
-                    .near = { 1.f },
-                    .horizontal_fov = { 90.f },
-                    .width = 1280,
-                    .height = 720 }
+                    .aspect = { 16.f / 9.f },
+                    .settings = camera_settings }
     };
     ecs::njCameraArchetype camera_archetype{ camera_info };
     engine.add_archetype(camera_archetype);

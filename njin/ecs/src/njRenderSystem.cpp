@@ -58,29 +58,48 @@ namespace njin::ecs {
      */
         math::njMat4f
         calculate_projection_matrix(const ecs::njCameraComponent& camera) {
-            // convert to radians
-            const float angle{ camera.horizontal_fov *
-                               std::numbers::pi_v<float> / 180.f };
+            if (camera.type == njCameraType::Perspective) {
+                auto settings{
+                    std::get<PerspectiveCameraSettings>(camera.settings)
+                };
+                // convert to radians
+                const float angle{ settings.horizontal_fov *
+                                   std::numbers::pi_v<float> / 180.f };
 
-            const float aspect{ static_cast<float>(camera.width) /
-                                static_cast<float>(camera.height) };
+                // right, left
+                const float r{ std::atanf(angle / 2.f) * settings.near };
+                const float l{ -r };
 
-            // right, left
-            const float r{ std::atanf(angle / 2.f) * camera.near };
-            const float l{ -r };
+                // top, bottom
+                const float t{ r / camera.aspect };
+                const float b{ -t };
 
-            // top, bottom
-            const float t{ r / aspect };
-            const float b{ -t };
+                // near, far aliases
+                const auto& n{ settings.near };
+                const auto& f{ settings.far };
 
-            // near, far aliases
-            const auto& n{ camera.near };
-            const auto& f{ camera.far };
+                return { { (2 * n) / (r - l), 0, (2 * r) / (r - l) - 1, 0 },
+                         { 0, (2 * n) / (b - t), (2 * b) / (b - t) - 1, 0 },
+                         { 0, 0, f / (n - f), (n * f) / (n - f) },
+                         { 0, 0, -1, 0 } };
+            } else if (camera.type == njCameraType::Orthographic) {
+                auto settings{
+                    std::get<OrthographicCameraSettings>(camera.settings)
+                };
+                const float r{ camera.aspect * settings.scale };
+                const float l{ -r };
+                const float t{ settings.scale };
+                const float b{ -t };
 
-            return { { (2 * n) / (r - l), 0, (2 * r) / (r - l) - 1, 0 },
-                     { 0, (2 * n) / (b - t), (2 * b) / (b - t) - 1, 0 },
-                     { 0, 0, f / (n - f), (n * f) / (n - f) },
-                     { 0, 0, -1, 0 } };
+                // near, far aliases
+                const auto& n{ settings.near };
+                const auto& f{ settings.far };
+
+                return { { 2 / (r - l), 0, 0, (r + l) / (l - r) },
+                         { 0, 2 / (b - t), 0, (b + t) / (t - b) },
+                         { 0, 0, 1 / (n - f), n / (n - f) },
+                         { 0, 0, 0, 1 } };
+            }
         }
 
         /**
