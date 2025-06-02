@@ -38,7 +38,20 @@ namespace njin::vulkan {
             throw std::runtime_error("failed to allocate command buffer!");
         }
 
+        allocated_buffers_.push_back(command_buffer);
+
         return { *device_, command_buffer };
+    }
+
+    void CommandPool::free_buffers() {
+        if (!allocated_buffers_.empty()) {
+            vkFreeCommandBuffers(device_->get(),
+                                 command_pool_,
+                                 static_cast<uint32_t>(allocated_buffers_
+                                                       .size()),
+                                 allocated_buffers_.data());
+        }
+        allocated_buffers_.clear();
     }
 
     CommandPool::~CommandPool() {

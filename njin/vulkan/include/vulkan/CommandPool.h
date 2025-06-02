@@ -24,12 +24,15 @@ namespace njin::vulkan {
 
         CommandBuffer allocate_buffer(VkCommandBufferLevel level);
 
+        void free_buffers();
+
         ~CommandPool();
 
         VkCommandPool get() const;
 
         private:
         const LogicalDevice* device_;
+        std::vector<VkCommandBuffer> allocated_buffers_;
         VkCommandPool command_pool_{ VK_NULL_HANDLE };
     };
 }  // namespace njin::vulkan

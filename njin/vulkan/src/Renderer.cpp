@@ -67,6 +67,8 @@ namespace njin::vulkan {
                         VK_TRUE,
                         UINT64_MAX);
         vkResetFences(device_->get(), 1, in_flight_fence_.get_handle_address());
+
+        resources_->command_pool_.free_buffers();
         // get the index of the next image that will be available
         // NOTE: this does not mean the image can be written to
         // see https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#vkAcquireNextImageKHR
