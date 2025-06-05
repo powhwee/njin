@@ -62,6 +62,11 @@ namespace njin::vulkan {
         VkImageCreateInfo info_{};
         VkImageLayout current_layout_{ VK_IMAGE_LAYOUT_UNDEFINED };
 
+        /**
+         * Destroy the VkImage and VkDeviceMemory housed by this object
+         */
+        void clear();
+
         // do not destroy images that were created by the swapchain,
         // in this special case the swapchain will do it for us
         bool destroy_{ true };

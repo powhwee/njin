@@ -203,39 +203,13 @@ namespace njin::ecs {
             auto mesh{ std::get<njMeshComponent*>(view) };
             auto transform{ std::get<njTransformComponent*>(view) };
             // global transform = local transform for entities with no parent
-            core::MeshData data{ .global_transform = transform->transform,
-                                 .mesh_name = mesh->mesh };
+            core::MeshData data{
+                .global_transform = transform->transform,
+                .mesh_name = mesh->mesh,
+                .texture_name = mesh->texture,
+            };
             core::Renderable renderable{ .type = RenderType::Mesh,
                                          .data = data };
-            renderables.push_back(renderable);
-        }
-
-        // colliders are drawn as wireframes
-        auto colliders{
-            entity_manager.get_views<njPhysicsComponent, njTransformComponent>()
-        };
-        for (const auto& [entity, view] : colliders) {
-            auto physics_comp{ std::get<njPhysicsComponent*>(view) };
-            auto transform_comp{ std::get<njTransformComponent*>(view) };
-            njCollider collider{ physics_comp->current_collider };
-            // global transform of the collider
-            // the collider's transform is relative to the njTransformComponent
-            // of the entity
-            math::njMat4f transform{ transform_comp->transform *
-                                     collider.transform };
-            math::njVec3f centroid{ collider.transform.get_translation_part() };
-            std::vector<core::njVertex> line_list{
-                make_wireframe(centroid,
-                               collider.x_width,
-                               collider.y_width,
-                               collider.z_width)
-            };
-            core::WireframeData data{ .global_transform = transform,
-                                      .line_list = line_list };
-
-            core::Renderable renderable{ .type = RenderType::Wireframe,
-                                         .data = data };
-
             renderables.push_back(renderable);
         }
 

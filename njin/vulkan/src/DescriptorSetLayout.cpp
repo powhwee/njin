@@ -35,7 +35,14 @@ namespace njin::vulkan {
         std::vector<SetLayoutBindingInfo> binding_infos{ info.binding_infos };
         std::vector<VkDescriptorSetLayoutBinding> bindings;
         for (const SetLayoutBindingInfo& binding_info : binding_infos) {
-            bindings.push_back(binding_info.binding);
+            VkDescriptorSetLayoutBinding binding{
+                .binding = binding_info.binding,
+                .descriptorType = binding_info.descriptor_type,
+                .descriptorCount = binding_info.descriptor_count,
+                .stageFlags = binding_info.stage,
+                .pImmutableSamplers = nullptr
+            };
+            bindings.push_back(binding);
         }
 
         // make the VkDescriptorSetLayout

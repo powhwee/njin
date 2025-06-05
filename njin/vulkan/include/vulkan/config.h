@@ -9,7 +9,11 @@
 
 namespace njin::vulkan {
     /**
-   * Set 0
+     * Descriptor set configurations
+     */
+
+    /**
+   * MVP descriptor set
    * Binding 0: Model transform matrices for each entity
    * Binding 1: View and projection matrices for the camera. This is independent
    * of each entity
@@ -24,11 +28,10 @@ namespace njin::vulkan {
 
     inline SetLayoutBindingInfo DESCRIPTOR_SET_LAYOUT_BINDING_MODEL{
         .name = "model",
-        .binding = { .binding = 0,
-                     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                     .descriptorCount = MAX_OBJECTS,
-                     .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-                     .pImmutableSamplers = nullptr },
+        .binding = 0,
+        .descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .descriptor_count = 100,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
             .size = sizeof(DESCRIPTOR_SET_LAYOUT_BINDING_MODEL_FORMAT) }
@@ -44,11 +47,10 @@ namespace njin::vulkan {
 
     inline SetLayoutBindingInfo DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION{
         .name = "view_projection",
-        .binding = { .binding = 1,
-                     .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                     .descriptorCount = 1,
-                     .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-                     .pImmutableSamplers = nullptr },
+        .binding = 1,
+        .descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptor_count = 100,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
             .size =
@@ -59,6 +61,43 @@ namespace njin::vulkan {
         "mvp",
         { DESCRIPTOR_SET_LAYOUT_BINDING_MODEL,
           DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION }
+    };
+
+    /**
+     * Texture images descriptor set
+     * Binding 0: Texture images
+     */
+
+    inline SetLayoutBindingInfo DESCRIPTOR_SET_LAYOUT_BINDING_IMAGE{
+        .name = "image",
+        .binding = 0,
+        .descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptor_count = 100,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .extra_info =
+        SetLayoutBindingImageInfo{
+            .sampler_info = { .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                              .pNext = nullptr,
+                              .flags = 0,
+                              .magFilter = VK_FILTER_LINEAR,
+                              .minFilter = VK_FILTER_LINEAR,
+                              .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                              .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                              .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                              .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                              .mipLodBias = 0,
+                              .anisotropyEnable = VK_FALSE,
+                              .maxAnisotropy = 0,
+                              .compareEnable = VK_FALSE,
+                              .minLod = 0.f,
+                              .maxLod = 0.f,
+                              .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                              .unnormalizedCoordinates = VK_FALSE } }
+    };
+
+    inline SetLayoutInfo DESCRIPTOR_SET_LAYOUT_TEXTURES{
+        .name = "textures",
+        .binding_infos = { DESCRIPTOR_SET_LAYOUT_BINDING_IMAGE }
     };
 
     /**
@@ -83,6 +122,7 @@ namespace njin::vulkan {
     /**
      * Main drawing pipeline
      */
+
     // 4 bytes for the integer index into the model matrix descriptor array
     inline VkPushConstantRange PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL{
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
@@ -197,6 +237,125 @@ namespace njin::vulkan {
     };
 
     /**
+     * Isometric sprite pipeline
+     *
+     */
+
+    // 4 bytes for the integer index into the model matrix descriptor array
+    inline VkPushConstantRange PUSH_CONSTANT_RANGE_ISO_DRAW_MODEL{
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = 4
+    };
+
+    inline VkPushConstantRange PUSH_CONSTANT_RANGE_ISO_DRAW_TEXTURE{
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .offset = 4,
+        .size = 4
+    };
+
+    inline ShaderStageInfo SHADER_STAGE_INFO_ISO_DRAW_VERTEX{
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .shader_path = SHADER_DIR "/iso.vert"
+    };
+
+    inline ShaderStageInfo SHADER_STAGE_INFO_ISO_DRAW_FRAGMENT{
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .shader_path = SHADER_DIR "/iso.frag"
+    };
+
+    inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_ISO_DRAW_POSITION{
+        .name = "position",
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = 0
+    };
+
+    inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_ISO_DRAW_UV{
+        .name = "uv",
+        .location = 1,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = 12
+    };
+
+    inline VertexInputInfo VERTEX_INPUT_INFO_ISO_DRAW{
+        .name = "vertex",
+        .vertex_size = 20,
+        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_ISO_DRAW_POSITION,
+                             VERTEX_ATTRIBUTE_INFO_ISO_DRAW_UV }
+    };
+
+    struct VERTEX_INPUT_ISO_DRAW_FORMAT {
+        // position
+        float x;
+        float y;
+        float z;
+
+        // uv
+        float u;
+        float v;
+    };
+
+    using IsoDrawVertex = VERTEX_INPUT_ISO_DRAW_FORMAT;
+
+    inline InputAssemblyInfo INPUT_ASSEMBLY_INFO_ISO_DRAW{
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+    };
+
+    inline RasterizationInfo RASTERIZATION_INFO_ISO_DRAW{
+        .polygon_mode = VK_POLYGON_MODE_FILL,
+        .cull_mode = VK_CULL_MODE_BACK_BIT,
+        .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .line_width = 1.f
+    };
+
+    inline DepthStencilInfo DEPTH_STENCIL_INFO_ISO_DRAW{
+        .depth_test_enable = VK_TRUE,
+        .depth_write_enable = VK_FALSE,
+        .depth_compare_op = VK_COMPARE_OP_LESS
+    };
+
+    inline AttachmentColorBlendInfo ATTACHMENT_COLOR_BLEND_INFO_ISO_DRAW_COLOR{
+        .attachment_name = "swapchain",
+        .blend_enable = VK_TRUE,
+        .src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dst_color_blend_factor = VK_BLEND_FACTOR_DST_ALPHA,
+        .color_blend_op = VK_BLEND_OP_ADD,
+        .src_alpha_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dst_alpha_blend_factor = VK_BLEND_FACTOR_DST_ALPHA,
+        .alpha_blend_op = VK_BLEND_OP_ADD,
+        .color_write_mask = VK_COLOR_COMPONENT_R_BIT |
+                            VK_COLOR_COMPONENT_G_BIT |
+                            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+
+    inline ColorBlendInfo COLOR_BLEND_INFO_ISO_DRAW{
+        .logic_op_enable = VK_FALSE,
+        .attachment_blend_infos = { ATTACHMENT_COLOR_BLEND_INFO_ISO_DRAW_COLOR }
+    };
+
+    inline DynamicStateInfo DYNAMIC_STATE_INFO_ISO_DRAW{
+        .dynamic_states = { VK_DYNAMIC_STATE_VIEWPORT,
+                            VK_DYNAMIC_STATE_SCISSOR }
+    };
+
+    inline PipelineInfo PIPELINE_INFO_ISO_DRAW{
+        .render_pass = "iso",
+        .subpass = "draw",
+        .set_layouts = { "mvp", "textures" },
+        .push_constant_ranges = { PUSH_CONSTANT_RANGE_ISO_DRAW_MODEL,
+                                  PUSH_CONSTANT_RANGE_ISO_DRAW_TEXTURE },
+        .shader_stages = { SHADER_STAGE_INFO_ISO_DRAW_VERTEX,
+                           SHADER_STAGE_INFO_ISO_DRAW_FRAGMENT },
+        .vertex_input = VERTEX_INPUT_INFO_ISO_DRAW,
+        .input_assembly = INPUT_ASSEMBLY_INFO_ISO_DRAW,
+        .rasterization = RASTERIZATION_INFO_ISO_DRAW,
+        .depth_stencil = DEPTH_STENCIL_INFO_ISO_DRAW,
+        .color_blend = COLOR_BLEND_INFO_ISO_DRAW,
+        .dynamic = DYNAMIC_STATE_INFO_ISO_DRAW
+    };
+
+    /**
      * Render pass configurations
      */
 
@@ -233,7 +392,7 @@ namespace njin::vulkan {
         .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initial_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        .final_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
 
     inline AttachmentDescription RENDER_PASS_MAIN_ATTACHMENT_DESCRIPTION_DEPTH{
@@ -254,54 +413,64 @@ namespace njin::vulkan {
     };
 
     /**
-     * Debug render pass
-     */
-    // inline AttachmentReference ATTACHMENT_REFERENCE_DEBUG_DRAW_COLOR{
-    //     .attachment_name = "swapchain",
-    //     .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-    // };
-    //
-    // inline AttachmentReference ATTACHMENT_REFERENCE_DEBUG_DRAW_DEPTH{
-    //     .attachment_name = "depth",
-    //     .layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL
-    // };
-    //
-    // TODO
-    // inline SubpassInfo SUBPASS_INFO_DEBUG_DRAW{
-    //     .name = "draw",
-    //     .pipeline = PIPELINE_INFO_DEBUG_DRAW,
-    //     .vertex_buffer = VERTEX_BUFFER
-    //     .color_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN },
-    //     .depth_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_DEPTH }
-    // };
-    //
-    // inline AttachmentDescription
-    // RENDER_PASS_DEBUG_ATTACHMENT_DESCRIPTION_SWAPCHAIN{
-    //     .attachment_name = "swapchain",
-    //     .load_op = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    //     .store_op = VK_ATTACHMENT_STORE_OP_STORE,
-    //     .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-    //     .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-    //     .initial_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-    //     .final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-    // };
-    //
-    // inline AttachmentDescription RENDER_PASS_DEBUG_ATTACHMENT_DESCRIPTION_DEPTH{
-    //     .attachment_name = "depth",
-    //     .load_op = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    //     .store_op = VK_ATTACHMENT_STORE_OP_STORE,
-    //     .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-    //     .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-    //     .initial_layout = VK_IMAGE_LAYOUT_UNDEFINED,
-    //     .final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-    // };
-    //
-    // inline RenderPassInfo RENDER_PASS_INFO_DEBUG{
-    //     .name = "debug",
-    //     .attachment_list = { RENDER_PASS_DEBUG_ATTACHMENT_DESCRIPTION_SWAPCHAIN,
-    //                          RENDER_PASS_DEBUG_ATTACHMENT_DESCRIPTION_DEPTH },
-    //     .subpasses = { SUBPASS_INFO_DEBUG_DRAW }
+    * Isometric sprite drawing render pass
+    */
+    inline VertexBufferInfo VERTEX_BUFFER_INFO_ISO_DRAW{
+        .name = "iso_draw",
+        .vertex_input = VERTEX_INPUT_INFO_ISO_DRAW,
+        .max_vertex_count = 1000
+    };
 
-    inline RendererInfo RENDERER_INFO{ .render_passes = {
-                                           RENDER_PASS_INFO_MAIN } };
+    inline AttachmentReference ATTACHMENT_REFERENCE_ISO_DRAW_SWAPCHAIN{
+        .attachment_name = "swapchain",
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    inline AttachmentReference ATTACHMENT_REFERENCE_ISO_DRAW_DEPTH{
+        .attachment_name = "depth",
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    inline SubpassInfo SUBPASS_INFO_ISO_DRAW{
+        .name = "draw",
+        .pipeline = PIPELINE_INFO_ISO_DRAW,
+        .vertex_buffer = VERTEX_BUFFER_INFO_ISO_DRAW,
+        .color_attachments = { ATTACHMENT_REFERENCE_ISO_DRAW_SWAPCHAIN },
+        .depth_attachments = { ATTACHMENT_REFERENCE_ISO_DRAW_DEPTH }
+    };
+
+    inline AttachmentDescription
+    RENDER_PASS_ISO_ATTACHMENT_DESCRIPTION_SWAPCHAIN{
+        .attachment_name = "swapchain",
+        .load_op = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .store_op = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initial_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .final_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    };
+
+    inline AttachmentDescription RENDER_PASS_ISO_ATTACHMENT_DESCRIPTION_DEPTH{
+        .attachment_name = "depth",
+        .load_op = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .store_op = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencil_load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencil_store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initial_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        .final_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
+    inline RenderPassInfo RENDER_PASS_INFO_ISO{
+        .name = "iso",
+        .attachment_list = { RENDER_PASS_ISO_ATTACHMENT_DESCRIPTION_SWAPCHAIN,
+                             RENDER_PASS_ISO_ATTACHMENT_DESCRIPTION_DEPTH },
+        .subpasses = { SUBPASS_INFO_ISO_DRAW }
+    };
+
+    /**
+     * Overall renderer configuration
+     */
+    inline RendererInfo RENDERER_INFO{
+        .render_passes = { RENDER_PASS_INFO_MAIN, RENDER_PASS_INFO_ISO }
+    };
 };  // namespace njin::vulkan

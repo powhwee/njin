@@ -25,7 +25,7 @@ namespace njin::vulkan {
         for (const SetLayoutInfo& set_layout_info : set_layout_infos) {
             for (const SetLayoutBindingInfo& binding_info :
                  set_layout_info.binding_infos) {
-                descriptor_type_to_count[binding_info.binding.descriptorType]++;
+                descriptor_type_to_count[binding_info.descriptor_type]++;
             }
         }
 

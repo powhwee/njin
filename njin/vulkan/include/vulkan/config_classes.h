@@ -14,10 +14,6 @@ namespace njin::vulkan {
 
     struct SetLayoutBindingImageInfo {
         VkSamplerCreateInfo sampler_info;
-        VkExtent2D extent;
-        VkFormat format;
-        VkImageLayout layout;
-        VkImageAspectFlags aspect_flags;
     };
 
     using SetLayoutBindingExtraInfo =
@@ -25,7 +21,10 @@ namespace njin::vulkan {
 
     struct SetLayoutBindingInfo {
         std::string name;
-        VkDescriptorSetLayoutBinding binding;
+        uint32_t binding;
+        VkDescriptorType descriptor_type;
+        uint32_t descriptor_count;
+        VkShaderStageFlags stage;
         SetLayoutBindingExtraInfo extra_info;
     };
 

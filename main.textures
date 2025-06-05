@@ -1,0 +1,12 @@
+{
+  "textures": [
+    {
+      "name": "statue",
+      "path": "texture/statue_alpha.png"
+    },
+    {
+      "name" : "rocks",
+      "path" : "texture/rocks.png"
+    }
+  ]
+}

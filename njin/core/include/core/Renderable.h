@@ -10,16 +10,12 @@ namespace njin::core {
     struct MeshData {
         math::njMat4f global_transform;
         std::string mesh_name;
-    };
-
-    struct WireframeData {
-        math::njMat4f global_transform;
-        std::vector<njVertex> line_list{};
+        std::string texture_name;
     };
 
     struct Renderable {
         RenderType type{ RenderType::Mesh };
-        std::variant<MeshData, WireframeData> data;
+        std::variant<MeshData> data;
     };
 
 }  // namespace njin::core

@@ -58,10 +58,15 @@ namespace njin::vulkan {
         device_{ other.device_ },
         physical_device_{ other.physical_device_ },
         format_{ other.format_ },
-        image_{ other.image_ },
-        memory_{ other.memory_ },
         info_{ other.info_ },
         destroy_{ other.destroy_ } {
+        if (image_ != other.image_ && image_ != VK_NULL_HANDLE) {
+            // this image is being overwritten with another image
+            clear();
+        }
+        memory_ = other.memory_;
+        image_ = other.image_;
+
         other.device_ = nullptr;
         other.physical_device_ = nullptr;
         other.format_ = VK_FORMAT_UNDEFINED;
@@ -75,6 +80,12 @@ namespace njin::vulkan {
         device_ = other.device_;
         physical_device_ = other.physical_device_;
         format_ = other.format_;
+
+        if (image_ != other.image_ && image_ != VK_NULL_HANDLE) {
+            // this image is being overwritten with another image
+            clear();
+        }
+
         image_ = other.image_;
         memory_ = other.memory_;
         info_ = other.info_;
@@ -143,7 +154,7 @@ namespace njin::vulkan {
             .pNext = nullptr,
             .srcAccessMask = src_access_mask,
             .dstAccessMask = dst_access_mask,
-            .oldLayout = info_.initialLayout,
+            .oldLayout = current_layout_,
             .newLayout = new_layout,
             .srcQueueFamilyIndex = graphics_index,
             .dstQueueFamilyIndex = graphics_index,
@@ -171,6 +182,7 @@ namespace njin::vulkan {
                              &barrier);
         CommandBufferSubmitInfo end_info{ .should_wait_idle = true };
         command_buffer.end();
+        command_buffer.submit(end_info);
         current_layout_ = new_layout;
     }
 
@@ -203,5 +215,13 @@ namespace njin::vulkan {
 
         CommandBufferSubmitInfo end_info{ .should_wait_idle = true };
         command_buffer.end();
+        command_buffer.submit(end_info);
+    }
+
+    void Image::clear() {
+        vkFreeMemory(device_->get(), memory_, nullptr);
+        vkDestroyImage(device_->get(), image_, nullptr);
+        memory_ = VK_NULL_HANDLE;
+        image_ = VK_NULL_HANDLE;
     }
 }  // namespace njin::vulkan

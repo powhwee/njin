@@ -7,6 +7,7 @@
 
 #include "DescriptorPool.h"
 #include "DescriptorSetLayout.h"
+#include "core/njTexture.h"
 #include "vulkan/Buffer.h"
 #include "vulkan/Image.h"
 #include "vulkan/ImageView.h"
@@ -36,7 +37,7 @@ namespace njin::vulkan {
         VkDescriptorSet get_descriptor_set(const std::string& name) const;
 
         /**
-         * Replace data in a descriptor binding's underlying resource
+         * Replace data in a buffer descriptor binding's underlying resource
          * @tparam T Data type
          * @param set_name Name of descriptor set the binding belongs in
          * @param binding_name Name of binding
@@ -46,6 +47,17 @@ namespace njin::vulkan {
         void write_descriptor_data(const std::string& set_name,
                                    const std::string& binding_name,
                                    const std::vector<T>& data);
+
+        /**
+         * Replace data in an image descriptor binding's underlying resources
+         * @param set_name Name of descriptor set the binding belongs in
+         * @param binding_name Name of binding
+         * @param data New data
+         */
+        void
+        write_descriptor_data(const std::string& set_name,
+                              const std::string& binding_name,
+                              const std::vector<const core::njTexture*>& data);
 
         private:
         /**
@@ -71,8 +83,8 @@ namespace njin::vulkan {
         const PhysicalDevice* physical_device_{ nullptr };
         using SetName = std::string;
         using BindingName = std::string;
-        using Resource =
-        std::variant<Buffer, std::vector<std::pair<Image, ImageView>>>;
+        using ImageSet = std::pair<Image, ImageView>;
+        using Resource = std::variant<Buffer, std::vector<ImageSet>>;
 
         struct Hash {
             std::size_t
@@ -88,11 +100,13 @@ namespace njin::vulkan {
         // store the underlying handles, and those don't change.
 
         // sampler storage
-        std::vector<Sampler> samplers_;
+        Sampler sampler_;
         DescriptorPool descriptor_pool_;
 
         std::unordered_map<SetName, DescriptorSetLayout> set_layouts_;
         std::unordered_map<SetName, VkDescriptorSet> descriptor_sets_;
+        std::unordered_map<std::pair<SetName, BindingName>, uint32_t, Hash>
+        binding_indices_;
         std::unordered_map<std::pair<SetName, BindingName>, Resource, Hash>
         resources_;
     };

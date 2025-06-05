@@ -34,18 +34,27 @@ namespace njin::vulkan {
     }
 
     ImageView::ImageView(ImageView&& other) noexcept :
-        image_view_{ other.image_view_ },
         device_{ other.device_ },
         extent_{ other.extent_ } {
+        if (image_view_ != other.image_view_ && image_view_ != VK_NULL_HANDLE) {
+            clear();
+        }
+        image_view_ = other.image_view_;
+
         other.image_view_ = VK_NULL_HANDLE;
         other.device_ = VK_NULL_HANDLE;
         other.extent_ = {};
     }
 
     ImageView& ImageView::operator=(ImageView&& other) noexcept {
-        image_view_ = other.image_view_;
         device_ = other.device_;
         extent_ = other.extent_;
+
+        if (image_view_ != other.image_view_ && image_view_ != VK_NULL_HANDLE) {
+            clear();
+        }
+        image_view_ = other.image_view_;
+
         other.image_view_ = VK_NULL_HANDLE;
         other.device_ = VK_NULL_HANDLE;
         other.extent_ = {};
@@ -64,5 +73,10 @@ namespace njin::vulkan {
 
     VkExtent2D ImageView::get_extent() const {
         return extent_;
+    }
+
+    void ImageView::clear() {
+        vkDestroyImageView(device_, image_view_, nullptr);
+        image_view_ = VK_NULL_HANDLE;
     }
 }  // namespace njin::vulkan

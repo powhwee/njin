@@ -58,20 +58,36 @@ namespace njin::vulkan {
                                 nullptr);
 
         for (const RenderInfo& render_info : render_infos) {
-            //  type of these render infos is RenderType::Mesh
-            auto info{ std::get<MeshRenderInfo>(render_info.info) };
+            if (render_info.type == RenderType::Mesh) {
+                auto info{ std::get<MeshRenderInfo>(render_info.info) };
 
-            vkCmdPushConstants(command_buffer.get(),
-                               bind_set_.layout,
-                               VK_SHADER_STAGE_VERTEX_BIT,
-                               0,
-                               4,
-                               &info.model_index);
-            vkCmdDraw(command_buffer.get(),
-                      info.vertex_count,
-                      1,
-                      info.mesh_offset,
-                      0);
+                vkCmdPushConstants(command_buffer.get(),
+                                   bind_set_.layout,
+                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   0,
+                                   4,
+                                   &info.model_index);
+                vkCmdDraw(command_buffer.get(),
+                          info.vertex_count,
+                          1,
+                          info.mesh_offset,
+                          0);
+            } else if (render_info.type == RenderType::Billboard) {
+                auto info{ std::get<BillboardRenderInfo>(render_info.info) };
+                vkCmdPushConstants(command_buffer.get(),
+                                   bind_set_.layout,
+                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   0,
+                                   4,
+                                   &info.model_index);
+                vkCmdPushConstants(command_buffer.get(),
+                                   bind_set_.layout,
+                                   VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   4,
+                                   4,
+                                   &info.texture_index);
+                vkCmdDraw(command_buffer.get(), 6, 1, info.billboard_offset, 0);
+            }
         }
 
         CommandBufferSubmitInfo end_info{};

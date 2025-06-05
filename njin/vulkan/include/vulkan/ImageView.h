@@ -30,5 +30,10 @@ namespace njin::vulkan {
         VkImageView image_view_{ VK_NULL_HANDLE };
         VkDevice device_{ VK_NULL_HANDLE };
         VkExtent2D extent_;
+
+        /**
+         * Destroy the VkImageView housed by this ImageView
+         */
+        void clear();
     };
 }  // namespace njin::vulkan

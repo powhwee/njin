@@ -5,12 +5,6 @@
 layout (location = 0) in vec4 frag_color;
 layout (location = 1) in vec2 tex_coord;
 
-// lights
-layout (set = 1, binding = 0) readonly buffer Light {
-    vec3 position;
-    vec4 color;
-} lights[10];// TODO: replace with preprocessor
-
 // descriptors
 layout (set = 2, binding = 0) uniform sampler2D tex_sampler[2];
 

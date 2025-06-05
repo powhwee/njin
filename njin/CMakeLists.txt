@@ -84,11 +84,12 @@ add_custom_target(copy_test_inputs
 add_dependencies(test copy_test_inputs)
 
 # copy textures
-#set(TEXTURE_DIR ${CMAKE_SOURCE_DIR}/texture)
-#add_custom_target(copy_textures
-#                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${TEXTURE_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/texture"
-#                  COMMENT "Copying ${TEXTURE_DIR} to ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-#add_dependencies(njin copy_textures)
+set(TEXTURE_DIR ${CMAKE_SOURCE_DIR}/texture)
+add_custom_target(copy_textures
+                  COMMAND ${CMAKE_COMMAND} -E copy_directory ${TEXTURE_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/texture"
+                  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/main.textures" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+                  COMMENT " Copying ${TEXTURE_DIR} to ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+add_dependencies(njin copy_textures)
 
 # copy meshes
 set(MESH_DIR ${CMAKE_SOURCE_DIR}/mesh)
