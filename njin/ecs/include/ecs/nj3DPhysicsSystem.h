@@ -28,9 +28,9 @@ namespace njin::ecs {
     * The BVH is then updated, then collision queries are answered.
     *
     */
-    class njPhysicsSystem final : public njSystem {
+    class nj3DPhysicsSystem final : public njSystem {
         public:
-        njPhysicsSystem();
+        nj3DPhysicsSystem();
 
         void update(const ecs::njEntityManager& entity_manager) override;
 

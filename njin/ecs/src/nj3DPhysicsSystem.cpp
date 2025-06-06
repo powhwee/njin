@@ -1,9 +1,8 @@
-#include "ecs/njPhysicsSystem.h"
-
 #include <chrono>
 #include <ranges>
 
 #include "ecs/Components.h"
+#include "ecs/nj3DPhysicsSystem.h"
 #include "physics/BVH.h"
 constexpr std::intmax_t TICK_RATE{ 60 };
 constexpr float DT{ 1.0 / TICK_RATE };
@@ -122,9 +121,9 @@ namespace njin::ecs {
         }
     }  // namespace
 
-    njPhysicsSystem::njPhysicsSystem() : njSystem{ TickGroup::Two } {}
+    nj3DPhysicsSystem::nj3DPhysicsSystem() : njSystem{ TickGroup::Two } {}
 
-    void njPhysicsSystem::update(const ecs::njEntityManager& entity_manager) {
+    void nj3DPhysicsSystem::update(const ecs::njEntityManager& entity_manager) {
         if (!should_update()) {
             return;
         }
@@ -147,7 +146,7 @@ namespace njin::ecs {
         // answer shape casts
     }
 
-    bool njPhysicsSystem::should_update() {
+    bool nj3DPhysicsSystem::should_update() {
         using namespace std::chrono;
 
         duration<steady_clock::rep, std::ratio<1, TICK_RATE>> interval{ 1 };
@@ -161,7 +160,7 @@ namespace njin::ecs {
         return false;
     }
 
-    void njPhysicsSystem::write_current_transforms(const ecs::njEntityManager&
+    void nj3DPhysicsSystem::write_current_transforms(const ecs::njEntityManager&
                                                    entity_manager) {
         // we only want to change the transforms of entities managed by the
         // physics system i.e. those with an njPhysicsComponent
@@ -182,7 +181,7 @@ namespace njin::ecs {
         }
     }
 
-    void njPhysicsSystem::calculate_new_transforms(const ecs::njEntityManager&
+    void nj3DPhysicsSystem::calculate_new_transforms(const ecs::njEntityManager&
                                                    entity_manager) {
         auto views{
             entity_manager.get_views<njTransformComponent, njPhysicsComponent>()
@@ -235,7 +234,7 @@ namespace njin::ecs {
     }
 
     std::vector<physics::Primitive>
-    njPhysicsSystem::calculate_primitives(const njEntityManager& entity_manager)
+    nj3DPhysicsSystem::calculate_primitives(const njEntityManager& entity_manager)
     const {
         std::vector<physics::Primitive> primitives{};
         auto views{ entity_manager.get_views<njPhysicsComponent>() };
@@ -313,7 +312,7 @@ namespace njin::ecs {
     }
 
     physics::BVH
-    njPhysicsSystem::depenetrate(const njEntityManager& entity_manager,
+    nj3DPhysicsSystem::depenetrate(const njEntityManager& entity_manager,
                                  const std::vector<physics::Primitive>&
                                  primitives) {
         physics::BVH current_bvh{ primitives };
