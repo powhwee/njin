@@ -104,7 +104,7 @@ namespace njin::ecs {
     // Used to define the bounds of rigid bodies,
     // and also for use as geometry for shape casting
     // Note that this collider specifies bounds in local space
-    struct njCollider {
+    struct nj3DCollider {
         math::njMat4f transform{};
 
         // full width, centred on the centroid
@@ -121,12 +121,12 @@ namespace njin::ecs {
     /**
      * Dynamics state
      */
-    struct njPhysicsComponent {
+    struct nj3DPhysicsComponent {
         math::njVec3f velocity{};  // do not edit manually
         math::njVec3f force{};     // do not edit manually
         float mass{ 0 };
-        njCollider collider{};          // original aabb representation
-        njCollider current_collider{};  // current aabb
+        nj3DCollider collider{};          // original aabb representation
+        nj3DCollider current_collider{};  // current aabb
         RigidBodyType type{ RigidBodyType::Static };
     };
 

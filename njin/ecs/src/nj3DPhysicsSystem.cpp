@@ -18,10 +18,10 @@ namespace njin::ecs {
         void resolve_inputs(const ecs::njEntityManager& entity_manager) {
             const auto views{
                 entity_manager
-                .get_views<njMovementIntentComponent, njPhysicsComponent>()
+                .get_views<njMovementIntentComponent, nj3DPhysicsComponent>()
             };
             for (const auto& view : views | std::views::values) {
-                const auto physics{ std::get<njPhysicsComponent*>(view) };
+                const auto physics{ std::get<nj3DPhysicsComponent*>(view) };
                 const auto intent{ std::get<njMovementIntentComponent*>(view) };
 
                 if (intent->velocity_override) {
@@ -163,9 +163,9 @@ namespace njin::ecs {
     void nj3DPhysicsSystem::write_current_transforms(const ecs::njEntityManager&
                                                    entity_manager) {
         // we only want to change the transforms of entities managed by the
-        // physics system i.e. those with an njPhysicsComponent
+        // physics system i.e. those with an nj3DPhysicsComponent
         const auto views{
-            entity_manager.get_views<njTransformComponent, njPhysicsComponent>()
+            entity_manager.get_views<njTransformComponent, nj3DPhysicsComponent>()
         };
         for (const auto& [entity, view] : views) {
             const auto transform_comp{ std::get<njTransformComponent*>(view) };
@@ -184,12 +184,12 @@ namespace njin::ecs {
     void nj3DPhysicsSystem::calculate_new_transforms(const ecs::njEntityManager&
                                                    entity_manager) {
         auto views{
-            entity_manager.get_views<njTransformComponent, njPhysicsComponent>()
+            entity_manager.get_views<njTransformComponent, nj3DPhysicsComponent>()
         };
 
         for (const auto& [entity, view] : views) {
             auto transform_comp{ std::get<njTransformComponent*>(view) };
-            auto physics_comp{ std::get<njPhysicsComponent*>(view) };
+            auto physics_comp{ std::get<nj3DPhysicsComponent*>(view) };
 
             // force components
             float f_x{ physics_comp->force.x };
@@ -237,9 +237,9 @@ namespace njin::ecs {
     nj3DPhysicsSystem::calculate_primitives(const njEntityManager& entity_manager)
     const {
         std::vector<physics::Primitive> primitives{};
-        auto views{ entity_manager.get_views<njPhysicsComponent>() };
+        auto views{ entity_manager.get_views<nj3DPhysicsComponent>() };
         for (const auto& [entity, view] : views) {
-            auto physics{ std::get<njPhysicsComponent*>(view) };
+            auto physics{ std::get<nj3DPhysicsComponent*>(view) };
 
             auto& c{ physics->collider };
             math::njMat4f global_transform{ entity_to_transform_.at(entity) *
@@ -325,16 +325,16 @@ namespace njin::ecs {
             // resolve all collision pairs
             for (auto [first, second] : current_overlapping) {
                 auto first_view{
-                    entity_manager.get_view<njPhysicsComponent>(first)
+                    entity_manager.get_view<nj3DPhysicsComponent>(first)
                 };
                 auto first_physics{
-                    std::get<njPhysicsComponent*>(first_view.second)
+                    std::get<nj3DPhysicsComponent*>(first_view.second)
                 };
                 auto second_view{
-                    entity_manager.get_view<njPhysicsComponent>(second)
+                    entity_manager.get_view<nj3DPhysicsComponent>(second)
                 };
                 auto second_physics{
-                    std::get<njPhysicsComponent*>(second_view.second)
+                    std::get<nj3DPhysicsComponent*>(second_view.second)
                 };
 
                 physics::BoundingBox first_box{
@@ -422,8 +422,8 @@ namespace njin::ecs {
         // component
         for (const auto& [entity, _] : primitives) {
             physics::BoundingBox box{ current_bvh.get_bounding_box(entity) };
-            auto view{ entity_manager.get_view<njPhysicsComponent>(entity) };
-            auto physics{ std::get<njPhysicsComponent*>(view.second) };
+            auto view{ entity_manager.get_view<nj3DPhysicsComponent>(entity) };
+            auto physics{ std::get<nj3DPhysicsComponent*>(view.second) };
 
             // the centroid of the bounding box is in global space,
             // because we prefer the physics system (particularly depenetration)
