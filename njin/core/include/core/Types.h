@@ -12,5 +12,6 @@ using MeshIndices = std::unordered_map<std::string, MeshInfo>;
 using TextureIndices = std::unordered_map<std::string, uint32_t>;
 enum class RenderType : uint8_t {
     Mesh,
-    Billboard
+    Billboard,
+    Collider
 };

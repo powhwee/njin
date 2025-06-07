@@ -19,6 +19,10 @@ namespace njin::vulkan {
     using SetLayoutBindingExtraInfo =
     std::variant<SetLayoutBindingBufferInfo, SetLayoutBindingImageInfo>;
 
+    /**
+     * @param name Name of this binding
+     * @param binding Binding number
+     */
     struct SetLayoutBindingInfo {
         std::string name;
         uint32_t binding;

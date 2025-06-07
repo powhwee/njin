@@ -189,9 +189,6 @@ namespace njin::ecs {
         // meshes
         // make the renderables and write into render buffer
         std::vector<core::Renderable> renderables{};
-        auto meshes_with_parents{
-            entity_manager.get_views<njMeshComponent, njTransformComponent>()
-        };
 
         // meshes with no parent entity
         auto meshes_no_parents{
@@ -209,6 +206,23 @@ namespace njin::ecs {
                 .texture_name = mesh->texture,
             };
             core::Renderable renderable{ .type = RenderType::Mesh,
+                                         .data = data };
+            renderables.push_back(renderable);
+        }
+
+        // colliders
+        auto colliders{ entity_manager.get_views<njTransformComponent,
+                                                 nj2DPhysicsComponent>() };
+        for (const auto& [entity, view] : colliders) {
+            auto transform{ std::get<njTransformComponent*>(view) };
+            auto physics{ std::get<nj2DPhysicsComponent*>(view) };
+            core::ColliderData data{
+                .x_width = physics->collider.x_width,
+                .z_width = physics->collider.z_width,
+                .global_transform = transform->transform *
+                                    physics->collider.transform
+            };
+            core::Renderable renderable{ .type = RenderType::Collider,
                                          .data = data };
             renderables.push_back(renderable);
         }

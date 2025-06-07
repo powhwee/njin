@@ -101,6 +101,32 @@ namespace njin::vulkan {
     };
 
     /**
+     * Collider global transform descriptor set
+     */
+    struct DESCRIPTOR_SET_LAYOUT_BINDING_COLLIDER_FORMAT {
+        math::njMat4f transform;
+    };
+
+    using MainColliderTransform = DESCRIPTOR_SET_LAYOUT_BINDING_COLLIDER_FORMAT;
+
+    inline SetLayoutBindingInfo DESCRIPTOR_SET_LAYOUT_BINDING_COLLIDER{
+        .name = "transform",
+        .binding = 0,
+        .descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .descriptor_count = 100,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .extra_info =
+        SetLayoutBindingBufferInfo{
+            .size = sizeof(DESCRIPTOR_SET_LAYOUT_BINDING_COLLIDER_FORMAT) }
+    };
+
+    inline SetLayoutInfo DESCRIPTOR_SET_LAYOUT_COLLIDERS{
+        .name = "colliders",
+        .binding_infos = { DESCRIPTOR_SET_LAYOUT_BINDING_COLLIDER,
+                           DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION }
+    };
+
+    /**
      * Configurations for images to be used as framebuffer attachments.
      * The imageview used for presentation to the screen is omitted, because
      * it is created automatically by the swapchain
@@ -120,7 +146,9 @@ namespace njin::vulkan {
     /** Graphics pipeline configurations */
 
     /**
-     * Main drawing pipeline
+     * Mesh bound drawing pipeline
+     * Render pass: Main
+     * Subpass: Draw
      */
 
     // 4 bytes for the integer index into the model matrix descriptor array
@@ -237,8 +265,101 @@ namespace njin::vulkan {
     };
 
     /**
+     * Render pass: Main
+     * Subpass: Collider
+     * Collider display pipeline
+     */
+    // 4 bytes for the integer index into the model matrix descriptor array
+    inline VkPushConstantRange PUSH_CONSTANT_RANGE_MAIN_COLLIDER_TRANSFORM{
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = 4
+    };
+
+    inline ShaderStageInfo SHADER_STAGE_INFO_MAIN_COLLIDER_VERTEX{
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .shader_path = SHADER_DIR "/collider.vert"
+    };
+
+    inline ShaderStageInfo SHADER_STAGE_INFO_MAIN_COLLIDER_FRAGMENT{
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .shader_path = SHADER_DIR "/collider.frag"
+    };
+
+    inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_MAIN_COLLIDER_POSITION{
+        .name = "position",
+        .location = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = 0
+    };
+
+    struct VERTEX_INPUT_MAIN_COLLIDER_FORMAT {
+        float x;
+        float y;
+        float z;
+    };
+
+    using MainColliderVertex = VERTEX_INPUT_MAIN_COLLIDER_FORMAT;
+
+    inline VertexInputInfo VERTEX_INPUT_INFO_MAIN_COLLIDER{
+        .name = "vertex",
+        .vertex_size = 12,
+        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_MAIN_COLLIDER_POSITION }
+    };
+
+    inline InputAssemblyInfo INPUT_ASSEMBLY_INFO_MAIN_COLLIDER{
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+    };
+
+    inline RasterizationInfo RASTERIZATION_INFO_MAIN_COLLIDER{
+        .polygon_mode = VK_POLYGON_MODE_LINE,
+        .cull_mode = VK_CULL_MODE_BACK_BIT,
+        .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .line_width = 1.f
+    };
+
+    inline DepthStencilInfo DEPTH_STENCIL_INFO_MAIN_COLLIDER{
+        .depth_test_enable = VK_FALSE,
+        .depth_write_enable = VK_FALSE,
+        .depth_compare_op = VK_COMPARE_OP_LESS
+    };
+
+    inline AttachmentColorBlendInfo
+    ATTACHMENT_COLOR_BLEND_INFO_MAIN_COLLIDER_COLOR{
+        .attachment_name = "swapchain",
+        .blend_enable = VK_FALSE,
+        .color_write_mask = VK_COLOR_COMPONENT_R_BIT |
+                            VK_COLOR_COMPONENT_G_BIT |
+                            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+
+    inline ColorBlendInfo COLOR_BLEND_INFO_MAIN_COLLIDER{
+        .logic_op_enable = VK_FALSE,
+        .attachment_blend_infos = { ATTACHMENT_COLOR_BLEND_INFO_MAIN_COLLIDER_COLOR },
+    };
+
+    inline DynamicStateInfo DYNAMIC_STATE_INFO_MAIN_COLLIDER{
+        .dynamic_states = { VK_DYNAMIC_STATE_VIEWPORT,
+                            VK_DYNAMIC_STATE_SCISSOR }
+    };
+
+    inline PipelineInfo PIPELINE_INFO_MAIN_COLLIDER{
+        .render_pass = "main",
+        .subpass = "collider",
+        .set_layouts = { "colliders" },
+        .push_constant_ranges = { PUSH_CONSTANT_RANGE_MAIN_COLLIDER_TRANSFORM },
+        .shader_stages = { SHADER_STAGE_INFO_MAIN_COLLIDER_VERTEX,
+                           SHADER_STAGE_INFO_MAIN_COLLIDER_FRAGMENT },
+        .vertex_input = VERTEX_INPUT_INFO_MAIN_COLLIDER,
+        .input_assembly = INPUT_ASSEMBLY_INFO_MAIN_COLLIDER,
+        .rasterization = RASTERIZATION_INFO_MAIN_COLLIDER,
+        .depth_stencil = DEPTH_STENCIL_INFO_MAIN_COLLIDER,
+        .color_blend = COLOR_BLEND_INFO_MAIN_COLLIDER,
+        .dynamic = DYNAMIC_STATE_INFO_MAIN_COLLIDER
+    };
+
+    /**
      * Isometric sprite pipeline
-     *
      */
 
     // 4 bytes for the integer index into the model matrix descriptor array
@@ -367,6 +488,12 @@ namespace njin::vulkan {
         .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
         .max_vertex_count = 1000
     };
+
+    inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_COLLIDER{
+        .name = "main_collider",
+        .vertex_input = VERTEX_INPUT_INFO_MAIN_COLLIDER,
+        .max_vertex_count = 1000
+    };
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{
         .attachment_name = "swapchain",
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
@@ -376,12 +503,31 @@ namespace njin::vulkan {
         .attachment_name = "depth",
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
+
+    inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_COLLIDER_SWAPCHAIN{
+        .attachment_name = "swapchain",
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_COLLIDER_DEPTH{
+        .attachment_name = "depth",
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    };
+
     inline SubpassInfo SUBPASS_INFO_MAIN_DRAW{
         .name = "draw",
         .pipeline = PIPELINE_INFO_MAIN_DRAW,
         .vertex_buffer = VERTEX_BUFFER_INFO_MAIN_DRAW,
         .color_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN },
         .depth_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_DEPTH }
+    };
+
+    inline SubpassInfo SUBPASS_INFO_MAIN_COLLIDER{
+        .name = "collider",
+        .pipeline = PIPELINE_INFO_MAIN_COLLIDER,
+        .vertex_buffer = VERTEX_BUFFER_INFO_MAIN_COLLIDER,
+        .color_attachments = { ATTACHMENT_REFERENCE_MAIN_COLLIDER_SWAPCHAIN },
+        .depth_attachments = { ATTACHMENT_REFERENCE_MAIN_COLLIDER_DEPTH }
     };
 
     inline AttachmentDescription
@@ -409,7 +555,7 @@ namespace njin::vulkan {
         .name = "main",
         .attachment_list = { RENDER_PASS_MAIN_ATTACHMENT_DESCRIPTION_SWAPCHAIN,
                              RENDER_PASS_MAIN_ATTACHMENT_DESCRIPTION_DEPTH },
-        .subpasses = { SUBPASS_INFO_MAIN_DRAW }
+        .subpasses = { SUBPASS_INFO_MAIN_DRAW, SUBPASS_INFO_MAIN_COLLIDER }
     };
 
     /**

@@ -7,6 +7,7 @@
 #include "core/loader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
+#include "ecs/nj2DPhysicsSystem.h"
 #include "ecs/nj3DPhysicsSystem.h"
 #include "ecs/njArchetype.h"
 #include "ecs/njCameraArchetype.h"
@@ -35,7 +36,6 @@
 #include "vulkan/Window.h"
 #include "vulkan/config.h"
 #include "vulkan/include/vulkan/RenderInfos.h"
-#include "vulkan/pipeline_setup.h"
 #include "vulkan/util.h"
 
 #include <algorithm>
@@ -69,11 +69,15 @@ int main() {
     RenderResourceInfos resource_infos{
         .attachment_images = { ATTACHMENT_IMAGE_INFO_DEPTH },
         .set_layouts = { DESCRIPTOR_SET_LAYOUT_INFO_MVP,
-                         DESCRIPTOR_SET_LAYOUT_TEXTURES },
+                         DESCRIPTOR_SET_LAYOUT_TEXTURES,
+                         DESCRIPTOR_SET_LAYOUT_COLLIDERS },
         .render_passes = { RENDER_PASS_INFO_MAIN, RENDER_PASS_INFO_ISO },
-        .pipelines = { PIPELINE_INFO_MAIN_DRAW, PIPELINE_INFO_ISO_DRAW },
+        .pipelines = { PIPELINE_INFO_MAIN_DRAW,
+                       PIPELINE_INFO_ISO_DRAW,
+                       PIPELINE_INFO_MAIN_COLLIDER },
         .vertex_buffers = { VERTEX_BUFFER_INFO_MAIN_DRAW,
-                            VERTEX_BUFFER_INFO_ISO_DRAW }
+                            VERTEX_BUFFER_INFO_ISO_DRAW,
+                            VERTEX_BUFFER_INFO_MAIN_COLLIDER }
     };
 
     RenderResources resources{ logical_device,
@@ -101,13 +105,14 @@ int main() {
     engine.add_system(std::make_unique<ecs::njMovementSystem>());
     core::RenderBuffer render_buffer{};
     engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
+    engine.add_system(std::make_unique<ecs::nj2DPhysicsSystem>());
 
     ecs::OrthographicCameraSettings camera_settings{ .near = { 1.f },
                                                      .far = { 1000.f },
                                                      .scale = { 10 } };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = ecs::njTransformComponent::make(10.f, 8.f, 10.f),
+        .transform = ecs::njTransformComponent::make(-10.f, 8.f, -10.f),
         .camera = { .type = ecs::njCameraType::Orthographic,
                     .up = { 0.f, 1.f, 0.f },
                     .look_at = { 0.f, 0.f, 0.f },
@@ -134,7 +139,13 @@ int main() {
         .input = {},
         .mesh = { .mesh = "player", .texture = "statue" },
         .intent = {},
-        .physics = {}
+        .physics = { .velocity = {},
+                     .force = {},
+                     .mass = 80,
+                     .collider = { .transform = { math::njMat4Type::Translation,
+                                                  { 0.f, 0.f, 0.f } },
+                                   .x_width = 1,
+                                   .z_width = 1 } }
     };
     ecs::njPlayerArchetype player_archetype{ player_archetype_info };
     engine.add_archetype(player_archetype);

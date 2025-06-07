@@ -87,6 +87,17 @@ namespace njin::vulkan {
                                    4,
                                    &info.texture_index);
                 vkCmdDraw(command_buffer.get(), 6, 1, info.billboard_offset, 0);
+            } else if (render_info.type == RenderType::Collider) {
+                auto info{ std::get<ColliderRenderInfo>(render_info.info) };
+
+                vkCmdPushConstants(command_buffer.get(),
+                                   bind_set_.layout,
+                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   0,
+                                   4,
+                                   &info.transform_index);
+
+                vkCmdDraw(command_buffer.get(), 6, 1, info.collider_offset, 0);
             }
         }
 

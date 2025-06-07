@@ -1,8 +1,9 @@
+#include "ecs/nj3DPhysicsSystem.h"
+
 #include <chrono>
 #include <ranges>
 
 #include "ecs/Components.h"
-#include "ecs/nj3DPhysicsSystem.h"
 #include "physics/BVH.h"
 constexpr std::intmax_t TICK_RATE{ 60 };
 constexpr float DT{ 1.0 / TICK_RATE };
@@ -161,12 +162,11 @@ namespace njin::ecs {
     }
 
     void nj3DPhysicsSystem::write_current_transforms(const ecs::njEntityManager&
-                                                   entity_manager) {
+                                                     entity_manager) {
         // we only want to change the transforms of entities managed by the
         // physics system i.e. those with an nj3DPhysicsComponent
-        const auto views{
-            entity_manager.get_views<njTransformComponent, nj3DPhysicsComponent>()
-        };
+        const auto views{ entity_manager.get_views<njTransformComponent,
+                                                   nj3DPhysicsComponent>() };
         for (const auto& [entity, view] : views) {
             const auto transform_comp{ std::get<njTransformComponent*>(view) };
             // if this entity is new to the physics system
@@ -182,10 +182,9 @@ namespace njin::ecs {
     }
 
     void nj3DPhysicsSystem::calculate_new_transforms(const ecs::njEntityManager&
-                                                   entity_manager) {
-        auto views{
-            entity_manager.get_views<njTransformComponent, nj3DPhysicsComponent>()
-        };
+                                                     entity_manager) {
+        auto views{ entity_manager
+                    .get_views<njTransformComponent, nj3DPhysicsComponent>() };
 
         for (const auto& [entity, view] : views) {
             auto transform_comp{ std::get<njTransformComponent*>(view) };
@@ -234,8 +233,8 @@ namespace njin::ecs {
     }
 
     std::vector<physics::Primitive>
-    nj3DPhysicsSystem::calculate_primitives(const njEntityManager& entity_manager)
-    const {
+    nj3DPhysicsSystem::calculate_primitives(const njEntityManager&
+                                            entity_manager) const {
         std::vector<physics::Primitive> primitives{};
         auto views{ entity_manager.get_views<nj3DPhysicsComponent>() };
         for (const auto& [entity, view] : views) {
@@ -313,8 +312,8 @@ namespace njin::ecs {
 
     physics::BVH
     nj3DPhysicsSystem::depenetrate(const njEntityManager& entity_manager,
-                                 const std::vector<physics::Primitive>&
-                                 primitives) {
+                                   const std::vector<physics::Primitive>&
+                                   primitives) {
         physics::BVH current_bvh{ primitives };
         physics::OverlappingPairs current_overlapping{
             physics::get_overlapping_pairs(current_bvh)

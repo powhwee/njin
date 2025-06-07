@@ -43,6 +43,13 @@ namespace njin::vulkan {
         uint32_t texture_index;  // sprite index
     };
 
+    struct ColliderRenderInfo {
+        uint32_t collider_offset;  // start vertex index of collider
+
+        // index of world transform for this collider
+        uint32_t transform_index;
+    };
+
     /**
      * Render info along with a renderpass-subpass key.
      * This informs the renderer as to which renderpass/subpass this piece
@@ -53,7 +60,8 @@ namespace njin::vulkan {
     struct KeyedRenderInfo {
         RenderKey key;
         RenderType type{ RenderType::Mesh };
-        std::variant<MeshRenderInfo, BillboardRenderInfo> info;
+        std::variant<MeshRenderInfo, BillboardRenderInfo, ColliderRenderInfo>
+        info;
     };
 
     /**
@@ -63,7 +71,8 @@ namespace njin::vulkan {
      */
     struct RenderInfo {
         RenderType type{ RenderType::Mesh };
-        std::variant<MeshRenderInfo, BillboardRenderInfo> info;
+        std::variant<MeshRenderInfo, BillboardRenderInfo, ColliderRenderInfo>
+        info;
     };
 
     /**

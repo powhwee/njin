@@ -30,7 +30,6 @@ set(SOURCES src/query.cpp
     src/DescriptorSet.cpp
     src/SamplerBuilder.cpp
     src/Sampler.cpp
-    src/pipeline_setup.cpp
     src/image_setup.cpp
     src/DescriptorSets.cpp
     src/AttachmentImages.cpp

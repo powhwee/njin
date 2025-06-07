@@ -140,6 +140,9 @@ namespace njin::vulkan {
     }
 
     std::vector<RenderInfo> RenderBuckets::get(const RenderKey& key) const {
+        if (!render_infos_.contains(key)) {
+            return {};
+        }
         return render_infos_.at(key);
     }
 
@@ -175,8 +178,14 @@ namespace njin::vulkan {
         // serialize all the corresponding model matrices into an array
         std::vector<vulkan::MainDrawModel> model_matrices{};
 
+        // serialize all the collider world matrices into an array
+        std::vector<vulkan::MainColliderTransform> collider_transforms{};
+
         // serialize all the billboard quads of required meshes into an array
         std::vector<vulkan::IsoDrawVertex> iso_vertices{};
+
+        // serialize all the collider quads into an array
+        std::vector<vulkan::MainColliderVertex> collider_vertices{};
 
         std::vector<math::njMat4f> view_projection{ view_matrix,
                                                     projection_matrix };
@@ -186,6 +195,10 @@ namespace njin::vulkan {
         uint32_t current_model_index{ 0 };
         // vertex offset of current billboard into vertex buffer
         uint32_t current_billboard_offset{ 0 };
+
+        // vertex offset of current collider into vertex buffer
+        uint32_t current_collider_offset{ 0 };
+        uint32_t current_collider_index{ 0 };
         for (const core::Renderable& renderable :
              render_buffer_->get_renderables()) {
             RenderKey main_draw_key{ "main", "draw" };
@@ -194,12 +207,17 @@ namespace njin::vulkan {
             RenderKey iso_draw_key{ "iso", "draw" };
             KeyedRenderInfo iso_draw_info{ .key = iso_draw_key };
 
+            RenderKey main_collider_key{ "main", "collider" };
+            KeyedRenderInfo main_collider_info{ .key = main_collider_key };
+
             if (renderable.type == RenderType::Mesh) {
                 main_draw_info.type = RenderType::Mesh;
                 iso_draw_info.type = RenderType::Billboard;
                 // add the vertices
-                auto data{ std::get<core::MeshData>(renderable.data) };
-                const core::njMesh* mesh{ mesh_registry.get(data.mesh_name) };
+                auto mesh_data{ std::get<core::MeshData>(renderable.data) };
+                const core::njMesh* mesh{
+                    mesh_registry.get(mesh_data.mesh_name)
+                };
                 std::vector<core::njPrimitive> primitives{
                     mesh->get_primitives()
                 };
@@ -227,7 +245,7 @@ namespace njin::vulkan {
 
                 // add the model matrices
                 vulkan::MainDrawModel main_draw_model{
-                    .model = data.global_transform
+                    .model = mesh_data.global_transform
                 };
                 model_matrices.push_back(main_draw_model);
 
@@ -245,7 +263,7 @@ namespace njin::vulkan {
                 BillboardRenderInfo billboard_info{
                     .billboard_offset = current_billboard_offset,
                     .model_index = current_model_index,
-                    .texture_index = texture_indices_.at(data.texture_name)
+                    .texture_index = texture_indices_.at(mesh_data.texture_name)
                 };
                 iso_draw_info.info = billboard_info;
                 render_infos_.add(iso_draw_info);
@@ -254,6 +272,57 @@ namespace njin::vulkan {
                 current_mesh_offset += mesh->get_vertex_count();
                 ++current_model_index;
                 current_billboard_offset += 6;  // each billboard is 6 vertices
+            } else if (renderable.type == RenderType::Collider) {
+                main_collider_info.type = RenderType::Collider;
+                auto collider_data{
+                    std::get<core::ColliderData>(renderable.data)
+                };
+                // transform
+                MainColliderTransform transform{
+                    .transform = collider_data.global_transform
+                };
+                collider_transforms.push_back(transform);
+
+                // calculate the vertices (these are in collider space)
+                // +z is forward, +x is left
+                float z_max{ collider_data.z_width / 2.f };
+                float z_min{ -z_max };
+                float x_max{ collider_data.x_width / 2.f };
+                float x_min{ -x_max };
+
+                MainColliderVertex v0{ .x = x_max,
+                                       .y = 0.f,
+                                       .z = z_max };  // top left corner
+                MainColliderVertex v1{ .x = x_min,
+                                       .y = 0.f,
+                                       .z = z_max };  // top right corner
+                MainColliderVertex v2{ .x = x_max,
+                                       .y = 0.f,
+                                       .z = z_min };  // bottom left corner
+                MainColliderVertex v3{ .x = x_min,
+                                       .y = 0.f,
+                                       .z = z_min };  // bottom right corner
+
+                std::vector<MainColliderVertex> vertices{
+                    v1, v0, v2, v2, v3, v1
+                };
+                collider_vertices.insert(collider_vertices.end(),
+                                         vertices.begin(),
+                                         vertices.end());
+
+                // add the RenderInfo
+                ColliderRenderInfo collider_info{
+                    .collider_offset = current_collider_offset,
+                    .transform_index = current_collider_index
+                };
+
+                main_collider_info.info = collider_info;
+
+                render_infos_.add(main_collider_info);
+
+                // increment counters
+                ++current_collider_index;
+                current_collider_offset += 6;  // each collider is 6 vertices
             }
 
             // write the data to the actual resources
@@ -263,11 +332,23 @@ namespace njin::vulkan {
             render_resources.descriptor_sets
             .write_descriptor_data("mvp", "view_projection", view_projection);
 
+            render_resources.descriptor_sets
+            .write_descriptor_data("colliders",
+                                   "transform",
+                                   collider_transforms);
+            render_resources.descriptor_sets
+            .write_descriptor_data("colliders",
+                                   "view_projection",
+                                   view_projection);
+
             render_resources.vertex_buffers.load_into_buffer("main_draw",
                                                              main_vertices);
 
             render_resources.vertex_buffers.load_into_buffer("iso_draw",
                                                              iso_vertices);
+
+            render_resources.vertex_buffers.load_into_buffer("main_collider",
+                                                             collider_vertices);
         }
     }
 

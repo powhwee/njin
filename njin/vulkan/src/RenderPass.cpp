@@ -105,6 +105,7 @@ namespace njin::vulkan {
             int this_color{ color_next_available_ };
             int this_depth{ depth_next_available_ };
             std::vector<std::string> attachment_names{};
+            color_attachment_references_.resize(subpass_infos.size());
             color_attachment_references_.push_back({});
             // make attachment references for color attachments
             for (const AttachmentReference& reference :
@@ -122,15 +123,16 @@ namespace njin::vulkan {
             subpass_color_attachment_index_[subpass_info.name] =
             attachment_names;
 
-            // depth attachment reference (there should only be one)
+            // depth attachment reference (there should only be one per subpass)
+            depth_attachment_references_.resize(subpass_infos.size());
             for (const AttachmentReference& reference :
                  subpass_info.depth_attachments) {
                 VkAttachmentReference depth_attachment_reference{
                     .attachment = attachment_indices[reference.attachment_name],
                     .layout = reference.layout
                 };
-                depth_attachment_references_
-                .push_back(depth_attachment_reference);
+                depth_attachment_references_[this_depth] =
+                depth_attachment_reference;
                 ++depth_next_available_;
             }
 

@@ -9,7 +9,7 @@ namespace njin::ecs {
         njInputComponent input;
         njMeshComponent mesh;
         njMovementIntentComponent intent;
-        nj3DPhysicsComponent physics;
+        nj2DPhysicsComponent physics;
     };
 
     class njPlayerArchetype final : public njArchetype {

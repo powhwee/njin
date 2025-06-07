@@ -21,6 +21,7 @@ namespace njin::ecs {
     /**
      * The transform of an entity, following a right-handed coordinate
      * system
+     * @param transform Global transform
      */
     struct njTransformComponent {
         static njTransformComponent make(float x, float y, float z) {
@@ -103,13 +104,29 @@ namespace njin::ecs {
     // members of components
     // Used to define the bounds of rigid bodies,
     // and also for use as geometry for shape casting
-    // Note that this collider specifies bounds in local space
+    // Note that this collider specifies bounds in the object space of its mesh
     struct nj3DCollider {
         math::njMat4f transform{};
 
         // full width, centred on the centroid
         float x_width{ 0 };
         float y_width{ 0 };
+        float z_width{ 0 };
+    };
+
+    /**
+     * A 2D bounding box.
+     * Bounds are specified in collider space.
+     * @param transform Object transform. The collider's vertices will be
+     * transformed into the same space as the mesh (object space), before
+     * both sets of vertices are transformed into world space together.
+     * @param x_width Full x-width of collider in collider space
+     * @param z_width Full z-width of collider in collider space
+     * @note It is assumed that the height (y) is 0
+     */
+    struct nj2DCollider {
+        math::njMat4f transform{};
+        float x_width{ 0 };
         float z_width{ 0 };
     };
 
@@ -128,6 +145,17 @@ namespace njin::ecs {
         nj3DCollider collider{};          // original aabb representation
         nj3DCollider current_collider{};  // current aabb
         RigidBodyType type{ RigidBodyType::Static };
+    };
+
+    /**
+     * Requires that the entity also have an njTransformComponent, because
+     * the collider is positioned relative to that transform
+     */
+    struct nj2DPhysicsComponent {
+        math::njVec3f velocity{};
+        math::njVec3f force{};
+        float mass{ 0 };
+        nj2DCollider collider{};
     };
 
     /**

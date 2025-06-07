@@ -13,9 +13,15 @@ namespace njin::core {
         std::string texture_name;
     };
 
+    struct ColliderData {
+        float x_width;
+        float z_width;
+        math::njMat4f global_transform;
+    };
+
     struct Renderable {
         RenderType type{ RenderType::Mesh };
-        std::variant<MeshData> data;
+        std::variant<MeshData, ColliderData> data;
     };
 
 }  // namespace njin::core
