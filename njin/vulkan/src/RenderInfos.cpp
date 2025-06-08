@@ -139,6 +139,10 @@ namespace njin::vulkan {
         render_infos_[info.key].push_back(render_info);
     }
 
+    void RenderBuckets::clear() {
+        render_infos_.clear();
+    }
+
     std::vector<RenderInfo> RenderBuckets::get(const RenderKey& key) const {
         if (!render_infos_.contains(key)) {
             return {};
@@ -159,6 +163,7 @@ namespace njin::vulkan {
     }
 
     void RenderInfos::update() {
+        render_infos_.clear();
         write_data(*mesh_registry_,
                    *render_resources_,
                    render_buffer_->get_view_matrix(),

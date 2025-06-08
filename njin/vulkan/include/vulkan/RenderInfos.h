@@ -84,6 +84,11 @@ namespace njin::vulkan {
 
         void add(const KeyedRenderInfo& info);
 
+        /**
+         * Clear all existing data inside the buckets
+         */
+        void clear();
+
         std::vector<RenderInfo> get(const RenderKey& key) const;
 
         private:
