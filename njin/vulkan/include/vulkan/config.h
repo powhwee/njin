@@ -18,8 +18,6 @@ namespace njin::vulkan {
    * Binding 1: View and projection matrices for the camera. This is independent
    * of each entity
    */
-    constexpr int MAX_OBJECTS = 100;
-
     struct DESCRIPTOR_SET_LAYOUT_BINDING_MODEL_FORMAT {
         math::njMat4f model;
     };
@@ -30,7 +28,7 @@ namespace njin::vulkan {
         .name = "model",
         .binding = 0,
         .descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        .descriptor_count = 100,
+        .descriptor_count = 1000,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
@@ -49,7 +47,7 @@ namespace njin::vulkan {
         .name = "view_projection",
         .binding = 1,
         .descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptor_count = 100,
+        .descriptor_count = 1000,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
@@ -440,10 +438,10 @@ namespace njin::vulkan {
         .attachment_name = "swapchain",
         .blend_enable = VK_TRUE,
         .src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dst_color_blend_factor = VK_BLEND_FACTOR_DST_ALPHA,
+        .dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         .color_blend_op = VK_BLEND_OP_ADD,
-        .src_alpha_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dst_alpha_blend_factor = VK_BLEND_FACTOR_DST_ALPHA,
+        .src_alpha_blend_factor = VK_BLEND_FACTOR_ONE,
+        .dst_alpha_blend_factor = VK_BLEND_FACTOR_ZERO,
         .alpha_blend_op = VK_BLEND_OP_ADD,
         .color_write_mask = VK_COLOR_COMPONENT_R_BIT |
                             VK_COLOR_COMPONENT_G_BIT |
@@ -486,13 +484,13 @@ namespace njin::vulkan {
     inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
         .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
-        .max_vertex_count = 1000
+        .max_vertex_count = 1000000
     };
 
     inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_COLLIDER{
         .name = "main_collider",
         .vertex_input = VERTEX_INPUT_INFO_MAIN_COLLIDER,
-        .max_vertex_count = 1000
+        .max_vertex_count = 1000000
     };
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{
         .attachment_name = "swapchain",
@@ -564,7 +562,7 @@ namespace njin::vulkan {
     inline VertexBufferInfo VERTEX_BUFFER_INFO_ISO_DRAW{
         .name = "iso_draw",
         .vertex_input = VERTEX_INPUT_INFO_ISO_DRAW,
-        .max_vertex_count = 1000
+        .max_vertex_count = 1000000
     };
 
     inline AttachmentReference ATTACHMENT_REFERENCE_ISO_DRAW_SWAPCHAIN{

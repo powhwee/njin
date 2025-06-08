@@ -25,9 +25,6 @@ layout (push_constant) uniform ModelIndex {
 } index;
 
 
-vec3 srgb_to_linear(vec3 srgb_color) {
-    return pow(srgb_color, vec3(2.2));
-}
 
 
 void main() {

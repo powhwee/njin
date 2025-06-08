@@ -39,7 +39,7 @@ namespace njin::ecs {
     nj2DPhysicsSystem::nj2DPhysicsSystem() : njSystem{ TickGroup::Two } {}
 
     void nj2DPhysicsSystem::update(const ecs::njEntityManager& entity_manager) {
-        if (should_update()) {
+        if (!should_update()) {
             return;
         }
         auto views{ entity_manager
@@ -113,6 +113,9 @@ namespace njin::ecs {
             float v_x{ physics_comp->velocity.x };
             float v_y{ physics_comp->velocity.y };
             float v_z{ physics_comp->velocity.z };
+
+            std::cout << std::format("({:.2f}, {:.2f}, {:.2f}) ", v_x, v_y, v_z)
+                      << std::endl;
 
             // position at t_i
             math::njMat4f global_transform{ transform_comp->transform };

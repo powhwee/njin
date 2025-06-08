@@ -14,9 +14,8 @@ layout (push_constant) uniform TextureIndex {
     layout (offset = 4) int i;
 } texture_index;
 
+
 void main() {
     vec4 colors = texture(tex_sampler[texture_index.i], tex_coords);
-    //    printf("%f, %f", gl_FragCoord.x, gl_FragCoord.y);
-
     out_color = colors;
 }

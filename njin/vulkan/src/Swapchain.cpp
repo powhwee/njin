@@ -63,8 +63,9 @@ namespace njin::vulkan {
         info.minImageCount = 2;
 
         // use the image format our selected surface format specifies
-        info.imageFormat = surface_format.format;
+        info.imageFormat = image_format_;
         info.imageColorSpace = surface_format.colorSpace;
+
         info.imageExtent = capabilities.currentExtent;
         info.imageArrayLayers = 1;  // non-stereoscopic-3D app -> 1 as per spec
         info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;

@@ -114,19 +114,22 @@ namespace njin::vulkan {
                     vulkan::RenderResources& render_resources,
                     const core::RenderBuffer& render_buffer);
 
+        void update();
+
         std::vector<RenderInfo> get_render_infos(const RenderKey& key) const;
 
         private:
         const core::RenderBuffer* render_buffer_;
         RenderBuckets render_infos_;
         TextureIndices texture_indices_;
+        const core::njRegistry<core::njMesh>* mesh_registry_;
+        RenderResources* render_resources_;
+        const core::njRegistry<core::njTexture>* texture_registry_;
         /**
          * Update data in render resources, and generate the corresponding
          * RenderInfos
         */
         void write_data(const core::njRegistry<core::njMesh>& mesh_registry,
-                        const ::njin::core::njRegistry<core::njTexture>&
-                        texture_registry,
                         vulkan::RenderResources& render_resources,
                         const math::njMat4f& view_matrix,
                         const math::njMat4f& projection_matrix);

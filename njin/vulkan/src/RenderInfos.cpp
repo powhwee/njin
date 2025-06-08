@@ -151,13 +151,18 @@ namespace njin::vulkan {
     const core::njRegistry<core::njTexture>& texture_registry,
     vulkan::RenderResources& render_resources,
     const core::RenderBuffer& render_buffer) :
+        mesh_registry_{ &mesh_registry },
+        render_resources_{ &render_resources },
+        texture_registry_{ &texture_registry },
         render_buffer_{ &render_buffer } {
         process_textures(render_resources, texture_registry);
-        write_data(mesh_registry,
-                   texture_registry,
-                   render_resources,
-                   render_buffer.get_view_matrix(),
-                   render_buffer.get_projection_matrix());
+    }
+
+    void RenderInfos::update() {
+        write_data(*mesh_registry_,
+                   *render_resources_,
+                   render_buffer_->get_view_matrix(),
+                   render_buffer_->get_projection_matrix());
     }
 
     std::vector<RenderInfo>
@@ -167,8 +172,6 @@ namespace njin::vulkan {
 
     void
     RenderInfos::write_data(const core::njRegistry<core::njMesh>& mesh_registry,
-                            const core::njRegistry<core::njTexture>&
-                            texture_registry,
                             vulkan::RenderResources& render_resources,
                             const math::njMat4f& view_matrix,
                             const math::njMat4f& projection_matrix) {

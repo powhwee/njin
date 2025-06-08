@@ -3,14 +3,12 @@
 #include <stdexcept>
 
 namespace njin::vulkan {
-    Surface::Surface(const Instance& instance,
-                     const Window& window) : instance_{ instance.get() } {
-        const bool result{
-            SDL_Vulkan_CreateSurface(window.get(),
-                                     *instance_,
-                                     nullptr,
-                                     &surface_)
-        };
+    Surface::Surface(const Instance& instance, const Window& window) :
+        instance_{ instance.get() } {
+        const bool result{ SDL_Vulkan_CreateSurface(window.get(),
+                                                    *instance_,
+                                                    nullptr,
+                                                    &surface_) };
 
         if (!result) {
             throw std::runtime_error("Failed to create surface!");
@@ -25,4 +23,4 @@ namespace njin::vulkan {
     VkSurfaceKHR Surface::get() const {
         return surface_;
     }
-}
+}  // namespace njin::vulkan

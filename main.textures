@@ -7,6 +7,10 @@
     {
       "name" : "rocks",
       "path" : "texture/rocks.png"
+    },
+    {
+      "name" : "player",
+      "path" : "texture/player.png"
     }
   ]
 }

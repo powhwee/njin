@@ -18,7 +18,7 @@ namespace mnt {
          */
         RoomBuilder(RoomSize size,
                     Coordinate coordinate,
-                    njin::core::njMesh& mesh);
+                    const std::string& mesh);
 
         /**
          * Build the room
@@ -29,7 +29,7 @@ namespace mnt {
         private:
         RoomSize size_{};
         Coordinate coordinate_{};
-        njin::core::njMesh* mesh_{};
+        std::string mesh_{};
     };
 
 }  // namespace mnt
