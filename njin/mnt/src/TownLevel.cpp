@@ -8,7 +8,7 @@ namespace mnt {
     TownLevel::TownLevel(njin::ecs::njEngine& engine) : Level{ engine } {}
 
     void TownLevel::load() {
-        // RoomBuilder::RoomSize size{ 1 };
+        // RoomBuilder::RoomSize size{ 5 };
         // RoomBuilder::Coordinate origin{ 0, 0, 0 };
         // RoomBuilder builder{ size, origin, "rocks" };
         // std::vector<njin::ecs::njObjectArchetype> tiles{ builder.build() };

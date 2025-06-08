@@ -430,7 +430,7 @@ namespace njin::vulkan {
 
     inline DepthStencilInfo DEPTH_STENCIL_INFO_ISO_DRAW{
         .depth_test_enable = VK_TRUE,
-        .depth_write_enable = VK_FALSE,
+        .depth_write_enable = VK_TRUE,
         .depth_compare_op = VK_COMPARE_OP_LESS
     };
 

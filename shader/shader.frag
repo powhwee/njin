@@ -8,5 +8,5 @@ layout (location = 0) out vec4 out_color;
 
 void main() {
     gl_FragDepth = 0.0;// always draw wireframes in front
-    out_color = vec4(1.0);
+    out_color = frag_color;
 }

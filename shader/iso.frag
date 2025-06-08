@@ -18,4 +18,6 @@ layout (push_constant) uniform TextureIndex {
 void main() {
     vec4 colors = texture(tex_sampler[texture_index.i], tex_coords);
     out_color = colors;
+    if (colors.a < 0.01) discard;// dont write to the depth buffer for transparent fragments
+    //    out_color = frag_color;
 }

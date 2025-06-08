@@ -114,9 +114,6 @@ namespace njin::ecs {
             float v_y{ physics_comp->velocity.y };
             float v_z{ physics_comp->velocity.z };
 
-            std::cout << std::format("({:.2f}, {:.2f}, {:.2f}) ", v_x, v_y, v_z)
-                      << std::endl;
-
             // position at t_i
             math::njMat4f global_transform{ transform_comp->transform };
             math::njVec4f translation_part{ global_transform.col(3) };
