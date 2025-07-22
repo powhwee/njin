@@ -2,6 +2,7 @@
 #include "ecs/nj2DPhysicsSystem.h"
 
 #include "ecs/Components.h"
+#include "physics/BVH.h"
 #include "physics/BVHNode.h"
 constexpr std::intmax_t TICK_RATE{ 60 };
 constexpr float DT{ 1.0 / TICK_RATE };
@@ -52,6 +53,16 @@ namespace njin::ecs {
 
             write_current_transforms(entity_manager);
             calculate_new_transforms(entity_manager);
+
+            // tentative primitives
+            std::vector<physics::Primitive> primitives{
+                calculate_primitives(entity_manager)
+            };
+            physics::BVH bvh{ primitives, physics::BoundingBoxType::XZ };
+            physics::BoundingBox box{ bvh.get_bounding_box(26) };
+            physics::BoundingBox box_2{ bvh.get_bounding_box(27) };
+            std::cout << box.does_overlap(box_2, physics::BoundingBoxType::XZ)
+                      << std::endl;
         }
     }
 
@@ -69,10 +80,38 @@ namespace njin::ecs {
         return false;
     }
 
+    std::vector<physics::Primitive>
+    nj2DPhysicsSystem::calculate_primitives(const njEntityManager&
+                                            entity_manager) {
+        std::vector<physics::Primitive> primitives{};
+        const auto& views{ entity_manager.get_views<njTransformComponent,
+                                                    nj2DPhysicsComponent>() };
+        for (const auto& [entity, view] : views) {
+            auto transform{ std::get<njTransformComponent*>(view) };
+            auto physics{ std::get<nj2DPhysicsComponent*>(view) };
+            nj2DCollider collider{ physics->collider };
+            // world transform of collider
+            math::njMat4f world_transform{ transform->transform *
+                                           collider.transform };
+
+            physics::BoundingBox box{
+                physics::BoundingBox::make(world_transform
+                                           .get_translation_part(),
+                                           collider.x_width,
+                                           0.f,
+                                           collider.z_width)
+            };
+            physics::Primitive primitive{ entity, box };
+            primitives.push_back(primitive);
+        }
+
+        return primitives;
+    }
+
     void nj2DPhysicsSystem::write_current_transforms(const ecs::njEntityManager&
                                                      entity_manager) {
         // we only want to change the transforms of entities managed by the
-        // physics system i.e. those with an nj3DPhysicsComponent
+        // physics system i.e. those with an nj2DPhysicsComponent
         const auto views{ entity_manager.get_views<njTransformComponent,
                                                    nj2DPhysicsComponent>() };
         for (const auto& [entity, view] : views) {

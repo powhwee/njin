@@ -10,6 +10,7 @@ set(SOURCES
     src/njCamaraArchetype.cpp
     src/njObjectArchetype.cpp
     src/nj2DPhysicsSystem.cpp
+    src/njEnemyArchetype.cpp
     physics/src/BVH.cpp
     physics/src/BVHNode.cpp
 )

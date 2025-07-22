@@ -3,10 +3,13 @@
 #include <vector>
 
 namespace njin::ecs::physics {
-    BVH::BVH(const std::vector<Primitive>& primitives) {
+    BVH::BVH(const std::vector<Primitive>& primitives, BoundingBoxType type) :
+        type_{ type } {
         if (!primitives.empty()) {
             // recursive construction of bvh
-            root_ = std::make_unique<BVHNode>(primitives, entity_to_node_);
+            root_ = std::make_unique<BVHNode>(primitives,
+                                              entity_to_node_,
+                                              type_);
         }
     }
 

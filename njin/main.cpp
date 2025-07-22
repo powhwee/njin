@@ -96,21 +96,6 @@ int main() {
 
     mnt::TownLevel town{ engine };
     town.load();
-    ecs::njObjectArchetypeCreateInfo info{
-        .name = "rocks",
-        .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
-        .mesh = { .mesh = "cube", .texture = "rocks" }
-    };
-    ecs::njObjectArchetype rocks{ info };
-
-    ecs::njObjectArchetypeCreateInfo info_2{
-        .name = "rocks_2",
-        .transform = ecs::njTransformComponent::make(0.f, 0.f, 2.f),
-        .mesh = { .mesh = "cube", .texture = "rocks" }
-    };
-    ecs::njObjectArchetype rocks_2{ info_2 };
-    engine.add_archetype(rocks);
-    engine.add_archetype(rocks_2);
     while (should_run) {
         engine.update();
         render_queue.update();

@@ -68,8 +68,10 @@ namespace njin::ecs::physics {
         *  min and largest max)
         *  @param primitives List of primitives to consider when choosing the
         *  partition axis
+        *  @param type
         */
-        Axis choose_partition_axis(const std::vector<Primitive>& primitives) {
+        Axis choose_partition_axis(const std::vector<Primitive>& primitives,
+                                   BoundingBoxType type) {
             std::vector<BoundingBox> boxes{};
             for (const auto& box : primitives | std::views::values) {
                 boxes.push_back(box);
@@ -93,13 +95,22 @@ namespace njin::ecs::physics {
             float z_extent{ *ranges::max_element(maxs_z) -
                             *ranges::min_element(mins_z) };
 
+            Axis chosen_axis{};
             if (x_extent > y_extent && x_extent > z_extent) {
-                return Axis::X;
-            } else if (y_extent > z_extent && y_extent > x_extent) {
-                return Axis::Y;
+                chosen_axis = Axis::X;
             } else {
-                return Axis::Z;
+                chosen_axis = Axis::Z;
             }
+            // If our BVH node type is 2D (XZ plane), we will never choose
+            // the Y-axis, so we skip the following check.
+
+            // Otherwise, we still have to check if the Y-axis would be a
+            // better partition axis.
+            if (y_extent > z_extent && y_extent > x_extent) {
+                chosen_axis = Axis::Y;
+            }
+
+            return chosen_axis;
         }
 
         /**
@@ -146,15 +157,16 @@ namespace njin::ecs::physics {
     }  // namespace
 
     BVHNode::BVHNode(const std::vector<Primitive>& primitives,
-                     EntityNodeMap& map) {
-        Axis partition_axis{ choose_partition_axis(primitives) };
+                     EntityNodeMap& map,
+                     BoundingBoxType type) :
+        type_{ type } {
+        Axis partition_axis{ choose_partition_axis(primitives, type) };
 
         // sort it along the axis
         auto compare{ [partition_axis](const Primitive& a,
                                        const Primitive& b) -> bool {
             if (partition_axis == Axis::X) {
                 return a.second.centroid.x < b.second.centroid.x;
-
             } else if (partition_axis == Axis::Y) {
                 return a.second.centroid.y < b.second.centroid.y;
             } else {
@@ -184,8 +196,8 @@ namespace njin::ecs::physics {
             size_t half{ primitives.size() / 2 };
             std::vector<Primitive> first{ prims.begin(), prims.begin() + half };
             std::vector<Primitive> second{ prims.begin() + half, prims.end() };
-            left_ = std::make_unique<BVHNode>(first, map);
-            right_ = std::make_unique<BVHNode>(second, map);
+            left_ = std::make_unique<BVHNode>(first, map, type);
+            right_ = std::make_unique<BVHNode>(second, map, type);
 
             std::vector<EntityId> entities{};
             for (const auto& entity : primitives | std::views::keys) {
@@ -201,7 +213,7 @@ namespace njin::ecs::physics {
     }
 
     bool BVHNode::does_overlap(const BVHNode& other) const {
-        return box_.does_overlap(other.box_);
+        return box_.does_overlap(other.box_, type_);
     }
 
     const BVHNode* BVHNode::get_left() const {

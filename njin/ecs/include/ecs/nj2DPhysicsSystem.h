@@ -1,8 +1,12 @@
 #pragma once
 #include <chrono>
+#include <vector>
+
+#include <complex.h>
 
 #include "math/njMat4.h"
 #include "njSystem.h"
+#include "physics/PhysicsTypes.h"
 
 namespace njin::ecs {
     /**
@@ -37,6 +41,15 @@ namespace njin::ecs {
          * @return True if the physics system should tick
          */
         bool should_update();
+
+        /**
+         * Calculate the 2d bounding boxes (colliders) based on the current
+         * transforms
+         * @param entity_manager Entity manager
+         * @return List of primitives
+         */
+        std::vector<physics::Primitive>
+        calculate_primitives(const njEntityManager& entity_manager);
 
         /**
          * Write the transforms for all entities at t_i

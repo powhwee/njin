@@ -75,7 +75,7 @@ namespace njin::ecs::physics {
         }
     }
 
-    TEST_CASE("bounding box", "[ecs][physics][BoundingBox]") {
+    TEST_CASE("3D bounding box", "[ecs][physics][BoundingBox]") {
         BoundingBox box_0{
             .centroid = { 0.5f, 0.5f, 0.5f },
             .min_x = 0.f,
@@ -106,11 +106,65 @@ namespace njin::ecs::physics {
             .max_z = 0.5f,
         };
 
-        SECTION("overlaps") {
+        // box 3 is above box 2 but share the same x and z
+        BoundingBox box_3{
+            .centroid = { 0.f, 0.f, 0.f },
+            .min_x = -0.5f,
+            .max_x = 0.5f,
+            .min_y = 10.f,
+            .max_y = 10.5f,
+            .min_z = -0.5f,
+            .max_z = 0.5f,
+        };
+
+        SECTION("3D overlaps") {
             // box 0 doesn't overlap with box 1,
             // but it does overlap with box 2
-            REQUIRE(!box_0.does_overlap(box_1));
-            REQUIRE(box_0.does_overlap(box_2));
+            REQUIRE(!box_0.does_overlap(box_1, BoundingBoxType::XYZ));
+            REQUIRE(box_0.does_overlap(box_2, BoundingBoxType::XYZ));
+
+            // it doesn't overlap with box_3, which is too high up
+            REQUIRE(!box_0.does_overlap(box_3, BoundingBoxType::XYZ));
+        }
+
+        SECTION("2D overlaps") {
+            REQUIRE(box_0.does_overlap(box_2, BoundingBoxType::XZ));
+            REQUIRE(box_0.does_overlap(box_3, BoundingBoxType::XZ));
+        }
+    }
+
+    TEST_CASE("2D BVH", "[ecs][physics][BVH]") {
+        BoundingBox box_0{
+            BoundingBox::make({ 0.f, 0.f, 0.f }, 1.f, 0.f, 1.f)
+        };
+        BoundingBox box_1{
+            BoundingBox::make({ 0.5f, 0.f, 0.5f }, 1.f, 0.f, 1.f)
+        };
+
+        // box 2 is the same as box 1 in the XZ plane, just way above it along the Y axis
+        BoundingBox box_2{
+            BoundingBox::make({ 0.5f, 10.f, 0.5f }, 1.f, 0.f, 1.f)
+        };
+
+        BoundingBox box_3{
+            BoundingBox::make({ 10.f, 0.f, 10.f }, 1.f, 0.f, 1.f)
+        };
+
+        Primitive prim_0{ 0, box_0 };
+        Primitive prim_1{ 1, box_1 };
+        Primitive prim_2{ 2, box_2 };
+        Primitive prim_3{ 3, box_3 };
+
+        SECTION("overlap") {
+            BVH bvh{ { prim_0, prim_1, prim_2, prim_3 }, BoundingBoxType::XZ };
+            REQUIRE(bvh.get_entities().size() == 4);
+            std::vector<EntityId> prim_0_overlaps{ bvh.get_overlaps(0) };
+
+            // 0 overlaps with 1 and 2 (we don't care about Y axis)
+            REQUIRE(prim_0_overlaps.size() == 2);
+
+            std::vector<EntityId> prim_3_overlaps{ bvh.get_overlaps(3) };
+            REQUIRE(prim_3_overlaps.size() == 0);
         }
     }
 }  // namespace njin::ecs::physics

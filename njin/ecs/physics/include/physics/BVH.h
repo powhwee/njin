@@ -7,6 +7,7 @@
 #include <set>
 
 namespace njin::ecs::physics {
+
     /**
      * A binary Bounding Volume Hierarchy implementation. A "primitive" refers
      * to the unit of a BVH, an abstract representation of real rigid bodies
@@ -14,7 +15,16 @@ namespace njin::ecs::physics {
      */
     class BVH {
         public:
-        explicit BVH(const std::vector<Primitive>& primitives);
+        /**
+         * Constructor
+         * @param primitives List of primitives to form the BVH with
+         * @param type The axes the BVH should be concerned with. For example,
+         * if we don't care about interactions along the Y-axis (i.e., for
+         * all practical purposes our bounding box is 2D), then we specify
+         * BVHType::XYZ
+         */
+        explicit BVH(const std::vector<Primitive>& primitives,
+                     BoundingBoxType type = BoundingBoxType::XYZ);
 
         const BVHNode* get_root() const;
 
@@ -40,6 +50,8 @@ namespace njin::ecs::physics {
 
         private:
         std::unique_ptr<BVHNode> root_{ nullptr };
+
+        BoundingBoxType type_{ BoundingBoxType::XYZ };
 
         // mapping of an entity to the node that represents it
         EntityNodeMap entity_to_node_{};

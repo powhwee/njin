@@ -20,9 +20,11 @@ namespace njin::ecs::physics {
         * @param primitives List of bounding box primitives to be part of this node
         * @param map Map of entity IDs to the leaf BVHNode that contains that entity.
         * This BVHNode will add itself to the map if it is a leaf node.
+        * @param type Axes of relevance in this BVH Node
         */
         explicit BVHNode(const std::vector<Primitive>& primitives,
-                         EntityNodeMap& map);
+                         EntityNodeMap& map,
+                         BoundingBoxType type);
 
         /**
          * @return True if this BVH node is a leaf (no children)
@@ -64,6 +66,7 @@ namespace njin::ecs::physics {
 
         std::unique_ptr<BVHNode> left_{ nullptr };
         std::unique_ptr<BVHNode> right_{ nullptr };
+        BoundingBoxType type_;
     };
 
 }  // namespace njin::ecs::physics
