@@ -215,6 +215,7 @@ namespace njin::vulkan {
                         buffer_infos[i] = buffer_info;
                     }
                     write_info.pBufferInfo = buffer_infos.data();
+                    write_info.pImageInfo = nullptr;
                 } else if (descriptor_type ==
                            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
                     // populate pImageInfo
@@ -242,6 +243,7 @@ namespace njin::vulkan {
                         image_infos[i] = image_info;
                     }
                     write_info.pImageInfo = image_infos.data();
+                    write_info.pBufferInfo = nullptr;
 
                     // keep the sampler alive
                     sampler_ = std::move(sampler);

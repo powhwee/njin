@@ -13,7 +13,7 @@ layout (location = 1) out vec2 out_tex_coords;
 // model matrix
 layout (set = 0, binding = 0) readonly buffer Model {
     mat4 model;
-} models[50];
+} models[16];
 
 // view-projection matrix
 layout (set = 0, binding = 1) uniform VP {

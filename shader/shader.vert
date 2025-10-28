@@ -11,7 +11,7 @@ layout (location = 0) out vec4 frag_color;
 // model matrix
 layout (set = 0, binding = 0) readonly buffer Model {
     mat4 model;
-} models[50];
+} models[16];
 
 // view-projection matrix
 layout (set = 0, binding = 1) uniform VP {
