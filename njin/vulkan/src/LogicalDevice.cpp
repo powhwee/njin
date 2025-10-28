@@ -1,9 +1,11 @@
+#define VK_ENABLE_BETA_EXTENSIONS 1
 #include "vulkan/LogicalDevice.h"
 
 #include <iostream>
 #include <stdexcept>
 
 #include <vulkan/util.h>
+#include <vulkan/vulkan.h>
 
 using namespace njin::vulkan;
 
@@ -104,9 +106,12 @@ namespace {
 
 namespace njin::vulkan {
     LogicalDevice::LogicalDevice(const PhysicalDevice& physical_device) {
+        std::vector<const char*> device_extensions = physical_device_extensions;
+        device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+
         if (
         !check_physical_device_extension_support(physical_device,
-                                                 physical_device_extensions)) {
+                                                 device_extensions)) {
             throw std::runtime_error(
             "Requested device extensions not supported by physical device");
         }
@@ -130,8 +135,8 @@ namespace njin::vulkan {
             .enabledLayerCount = 0,
             .ppEnabledLayerNames = nullptr,
             .enabledExtensionCount =
-            static_cast<uint32_t>(physical_device_extensions.size()),
-            .ppEnabledExtensionNames = physical_device_extensions.data(),
+            static_cast<uint32_t>(device_extensions.size()),
+            .ppEnabledExtensionNames = device_extensions.data(),
             .pEnabledFeatures = &features,
         };
 

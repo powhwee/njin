@@ -1,3 +1,4 @@
+#define VK_ENABLE_BETA_EXTENSIONS 1
 #include "vulkan/Instance.h"
 
 #include <iostream>
@@ -154,6 +155,9 @@ namespace njin::vulkan {
         info.pNext = nullptr;
         info.flags = 0;
         info.pApplicationInfo = &application_info;
+
+        info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
         // on debug builds we want one additional validation layer on top
         // of the main vulkan instance

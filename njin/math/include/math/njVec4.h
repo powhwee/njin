@@ -6,6 +6,12 @@
 
 namespace njin::math {
     template<typename T>
+    class njVec4;
+
+    template<typename T>
+    std::ostream& operator<<(std::ostream& os, const njVec4<T>& vec);
+
+    template<typename T>
     class njVec4 {
         public:
         njVec4();

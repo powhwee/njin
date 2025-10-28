@@ -12,6 +12,12 @@ namespace njin::math {
     };
 
     template<typename T>
+    class njMat4;
+
+    template<typename T>
+    std::ostream& operator<<(std::ostream& os, const njMat4<T>& vec);
+
+    template<typename T>
     class njMat4 {
         public:
         njMat4();

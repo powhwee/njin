@@ -3,6 +3,12 @@
 
 namespace njin::math {
     template<typename T>
+    class njVec3;
+
+    template<typename T>
+    std::ostream& operator<<(std::ostream& os, const njVec3<T>& vec);
+
+    template<typename T>
     class njVec3 {
         public:
         njVec3(T x, T y, T z);
@@ -20,6 +26,8 @@ namespace njin::math {
         njVec3<T> operator-() const;
 
         njVec3<T> operator*(const njVec3<T>& other) const;
+
+
 
         njVec3<T> operator*(T scalar) const;
 
