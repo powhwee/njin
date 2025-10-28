@@ -25,6 +25,9 @@ namespace njin::ecs {
                 const auto input{ std::get<njInputComponent*>(view.second) };
 
                 switch (event.type) {
+                case SDL_EVENT_QUIT:
+                    *should_run_ = false;
+                    break;
                 case SDL_EVENT_KEY_DOWN:
                     switch (event.key.key) {
                     case SDLK_W:
