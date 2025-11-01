@@ -25,23 +25,10 @@ namespace njin::core {
             std::string mesh_path{ gltf_mesh["path"].GetString() };
             njin::gltf::GLTFAsset asset{ mesh_path };
 
-            // get the attribute arrays
-            auto position_attributes{ asset.get_position_attributes() };
-            auto normal_attributes{ asset.get_normal_attributes() };
-            auto tangent_attributes{ asset.get_tangent_attributes() };
-            auto tex_coords{ asset.get_texture_coordinates() };
-            auto color_attributes{ asset.get_color_attributes() };
-            auto indices{ asset.get_indices() };
-
-            core::MeshBuilder mesh_builder{ indices };
-            mesh_builder.add_position_attributes(position_attributes);
-            mesh_builder.add_normal_attributes(normal_attributes);
-            mesh_builder.add_tangent_attributes(tangent_attributes);
-            mesh_builder.add_texture_coordinates(tex_coords);
-            mesh_builder.add_color_attributes(color_attributes);
-
-            core::njMesh mesh{ mesh_builder.build() };
-            mesh_registry.add(name, mesh);
+            for (auto& mesh : asset.get_meshes()) {
+                std::string registry_key = name + "-" + mesh.name;
+                mesh_registry.add(registry_key, mesh);
+            }
         }
     }
 

@@ -10,7 +10,7 @@ set(SOURCES src/file.cpp
 
 add_library(util STATIC ${SOURCES})
 target_include_directories(util PUBLIC include ${Stb_INCLUDE_DIR})
-target_link_libraries(util PUBLIC rapidjson math)
+target_link_libraries(util PUBLIC rapidjson math core)
 
 
 set(TEST_SOURCES test/Buffer_test.cpp)

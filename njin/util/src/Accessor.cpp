@@ -91,6 +91,16 @@ namespace njin::gltf {
 
                 // indices
                 else if (info.type == Type::Scalar &&
+                         info.component_type == ComponentType::UnsignedInt) {
+                    uint32_t component{};
+                    std::memcpy(&component,
+                                bytes.data() + current_offset,
+                                sizeof(uint32_t));
+                    current_offset += sizeof(uint32_t);
+
+                    elements.push_back(component);
+                }
+                else if (info.type == Type::Scalar &&
                          info.component_type == ComponentType::UnsignedShort) {
                     uint16_t component{};
                     std::memcpy(&component,
@@ -179,6 +189,15 @@ namespace njin::gltf {
         std::vector<uint16_t> elements{};
         for (const auto& element : elements_) {
             elements.push_back(std::get<uint16_t>(element));
+        }
+
+        return elements;
+    }
+
+    std::vector<uint32_t> Accessor::get_scalar_u32() const {
+        std::vector<uint32_t> elements{};
+        for (const auto& element : elements_) {
+            elements.push_back(std::get<uint32_t>(element));
         }
 
         return elements;

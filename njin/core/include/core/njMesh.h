@@ -8,8 +8,10 @@ namespace njin::core {
 
     class njMesh {
         public:
+        std::string name;
+
         njMesh() = default;
-        njMesh(const std::vector<njPrimitive>& primitives);
+        njMesh(const std::string& name, const std::vector<njPrimitive>& primitives);
 
         /**
          * Get the list of all vertices in this mesh

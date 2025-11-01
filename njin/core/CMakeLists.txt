@@ -2,7 +2,6 @@ set(SOURCES
     src/njMesh.cpp
     src/njPrimitive.cpp
     src/njVertex.cpp
-    src/MeshBuilder.cpp
     src/loader.cpp
     src/RenderBuffer.cpp
     src/njTexture.cpp)
@@ -12,7 +11,6 @@ target_include_directories(core PUBLIC include)
 target_link_libraries(core PUBLIC math rapidjson util Vulkan::Vulkan vulkan)
 
 set(TEST_SOURCES
-    test/MeshBuilder_test.cpp
     test/njMesh_test.cpp
     test/njPrimitive_test.cpp
     test/njVertex_test.cpp

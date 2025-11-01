@@ -2,10 +2,14 @@
 
 namespace njin::core {
 
-    njPrimitive::njPrimitive(const std::array<njVertex, 3>& vertices) :
-        vertices_{ vertices } {}
+    njPrimitive::njPrimitive(const std::vector<njVertex>& vertices, const std::vector<uint32_t>& indices) :
+        vertices_{ vertices }, indices_{ indices } {}
 
     std::vector<njVertex> njPrimitive::get_vertices() const {
-        return std::vector<njVertex>(vertices_.begin(), vertices_.end());
+        return vertices_;
+    }
+
+    std::vector<uint32_t> njPrimitive::get_indices() const {
+        return indices_;
     }
 }  // namespace njin::core

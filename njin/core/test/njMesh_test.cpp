@@ -9,7 +9,7 @@ namespace njin::core {
     TEST_CASE("njMesh", "[core][njMesh]") {
         SECTION("constructor no throw") {
             std::vector<njPrimitive> primitives{};
-            REQUIRE_NOTHROW(njMesh{ primitives });
+            REQUIRE_NOTHROW(njMesh{ "test_mesh", primitives });
         }
     }
 }  // namespace njin::core

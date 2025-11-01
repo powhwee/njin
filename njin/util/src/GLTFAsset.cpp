@@ -8,7 +8,13 @@
 #include <rapidjson/document.h>
 #include <vulkan/vulkan_core.h>
 
+#include "core/njVertex.h"
 #include "math/njVec3.h"
+#include "util/Accessor.h"
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#include <windows.h>
+#endif
 
 uint32_t MAGIC{ 0x46'54'6C'67 };
 uint32_t VERSION{ 2 };
@@ -20,6 +26,7 @@ namespace rj = rapidjson;
 namespace {
     namespace gltf = njin::gltf;
     namespace math = njin::math;
+    namespace core = njin::core;
 
     std::vector<gltf::BufferView>
     process_buffer_views(const gltf::Buffer& buffer,
@@ -189,110 +196,129 @@ namespace njin::gltf {
 
         buffer_views_ = process_buffer_views(buffer_, document);
 
-        rj::GenericArray meshes{ document["meshes"].GetArray() };
-        rj::GenericObject mesh{ meshes[0].GetObject() };
-        rj::GenericArray primitives{ mesh["primitives"].GetArray() };
-        rj::GenericObject primitive{ primitives[0].GetObject() };
-        rj::GenericObject attribute{ primitive["attributes"].GetObject() };
-
         rj::GenericArray accessors{ document["accessors"].GetArray() };
+        rj::GenericArray meshes{ document["meshes"].GetArray() };
 
-        // indices
-        int indices_accessor_index{ primitive["indices"].GetInt() };
-        rj::GenericObject gltf_indices_accessor{
-            accessors[indices_accessor_index].GetObject()
-        };
-        gltf::Accessor::AccessorCreateInfo indices_accessor_info{
-            make_accessor_create_info(buffer_views_, gltf_indices_accessor)
-        };
-        gltf::Accessor indices_accessor{ indices_accessor_info };
-        indices_ = indices_accessor.get_scalar();
+        for (const auto& mesh : meshes) {
+            std::string mesh_name = mesh["name"].GetString();
+            std::vector<core::njPrimitive> primitives{};
 
-        // position accessor
-        int position_accessor_index{ attribute["POSITION"].GetInt() };
-        rj::GenericObject gltf_position_accessor{
-            accessors[position_accessor_index].GetObject()
-        };
+            for (const auto& primitive : mesh["primitives"].GetArray()) {
+                // indices
+                int indices_accessor_index{ primitive["indices"].GetInt() };
+                rj::GenericObject gltf_indices_accessor{
+                    accessors[indices_accessor_index].GetObject()
+                };
+                gltf::Accessor::AccessorCreateInfo indices_accessor_info{
+                    make_accessor_create_info(buffer_views_, gltf_indices_accessor)
+                };
+                gltf::Accessor indices_accessor{ indices_accessor_info };
+                std::vector<uint32_t> indices;
+                if (indices_accessor_info.component_type == gltf::ComponentType::UnsignedInt) {
+                    indices = indices_accessor.get_scalar_u32();
+                } else if (indices_accessor_info.component_type == gltf::ComponentType::UnsignedShort) {
+                    std::vector<uint16_t> short_indices = indices_accessor.get_scalar();
+                    indices.assign(short_indices.begin(), short_indices.end());
+                }
 
-        gltf::Accessor::AccessorCreateInfo position_accessor_info{
-            make_accessor_create_info(buffer_views_, gltf_position_accessor)
-        };
+                // attributes
+                rj::GenericObject attribute{ primitive["attributes"].GetObject() };
 
-        gltf::Accessor position_accessor{ position_accessor_info };
-        position_attributes_ = position_accessor.get_vec3f();
+                // position
+                int position_accessor_index{ attribute["POSITION"].GetInt() };
+                rj::GenericObject gltf_position_accessor{
+                    accessors[position_accessor_index].GetObject()
+                };
+                gltf::Accessor::AccessorCreateInfo position_accessor_info{
+                    make_accessor_create_info(buffer_views_, gltf_position_accessor)
+                };
+                gltf::Accessor position_accessor{ position_accessor_info };
+                std::vector<math::njVec3f> positions = position_accessor.get_vec3f();
 
-        // normals accessor
-        int normal_accessor_index{ attribute["NORMAL"].GetInt() };
-        rj::GenericObject gltf_normal_accessor{
-            accessors[normal_accessor_index].GetObject()
-        };
+                // normal
+                std::vector<math::njVec3f> normals{};
+                if (attribute.HasMember("NORMAL")) {
+                    int normal_accessor_index{ attribute["NORMAL"].GetInt() };
+                    rj::GenericObject gltf_normal_accessor{
+                        accessors[normal_accessor_index].GetObject()
+                    };
+                    gltf::Accessor::AccessorCreateInfo normal_accessor_info{
+                        make_accessor_create_info(buffer_views_, gltf_normal_accessor)
+                    };
+                    gltf::Accessor normal_accessor{ normal_accessor_info };
+                    normals = normal_accessor.get_vec3f();
+                }
 
-        gltf::Accessor::AccessorCreateInfo normal_accessor_info{
-            make_accessor_create_info(buffer_views_, gltf_normal_accessor)
-        };
+                // tangent
+                std::vector<math::njVec4f> tangents{};
+                if (attribute.HasMember("TANGENT")) {
+                    int tangent_accessor_index{ attribute["TANGENT"].GetInt() };
+                    rj::GenericObject gltf_tangent_accessor{
+                        accessors[tangent_accessor_index].GetObject()
+                    };
+                    gltf::Accessor::AccessorCreateInfo tangent_accessor_info{
+                        make_accessor_create_info(buffer_views_, gltf_tangent_accessor)
+                    };
+                    gltf::Accessor tangent_accessor{ tangent_accessor_info };
+                    tangents = tangent_accessor.get_vec4f();
+                }
 
-        gltf::Accessor normal_accessor{ normal_accessor_info };
-        normal_attributes_ = normal_accessor.get_vec3f();
+                // texture coordinates
+                std::vector<math::njVec2f> tex_coords{};
+                if (attribute.HasMember("TEXCOORD_0")) {
+                    int tex_coord_accessor_index{ attribute["TEXCOORD_0"].GetInt() };
+                    rj::GenericObject gltf_tex_coord_accessor{
+                        accessors[tex_coord_accessor_index].GetObject()
+                    };
+                    Accessor::AccessorCreateInfo tex_coord_accessor_info{
+                        make_accessor_create_info(buffer_views_, gltf_tex_coord_accessor)
+                    };
+                    Accessor tex_coord_accessor{ tex_coord_accessor_info };
+                    tex_coords = tex_coord_accessor.get_vec2f();
+                }
 
-        // texture coordinates
-        int tex_coord_accessor_index{ attribute["TEXCOORD_0"].GetInt() };
-        rj::GenericObject gltf_tex_coord_accessor{
-            accessors[tex_coord_accessor_index].GetObject()
-        };
+                // colors
+                std::vector<math::njVec4<uint16_t>> colors{};
+                if (attribute.HasMember("COLOR_0")) {
+                    int color_accessor_index{ attribute["COLOR_0"].GetInt() };
+                    rj::GenericObject gltf_color_accessor{
+                        accessors[color_accessor_index].GetObject()
+                    };
+                    Accessor::AccessorCreateInfo color_accessor_info{
+                        make_accessor_create_info(buffer_views_, gltf_color_accessor)
+                    };
+                    Accessor color_accessor{ color_accessor_info };
+                    colors = color_accessor.get_vec4ushort();
+                }
 
-        Accessor::AccessorCreateInfo tex_coord_accessor_info{
-            make_accessor_create_info(buffer_views_, gltf_tex_coord_accessor)
-        };
-        Accessor tex_coord_accessor{ tex_coord_accessor_info };
-        tex_coords_ = tex_coord_accessor.get_vec2f();
+                std::vector<core::njVertex> vertices{};
+                for (int i = 0; i < positions.size(); ++i) {
+                    core::njVertexCreateInfo create_info{};
+                    create_info.position = positions[i];
+                    if (!normals.empty()) {
+                        create_info.normal = normals[i];
+                    }
+                    if (!tangents.empty()) {
+                        create_info.tangent = tangents[i];
+                    }
+                    if (!tex_coords.empty()) {
+                        create_info.tex_coord = tex_coords[i];
+                    }
+                    if (!colors.empty()) {
+                        create_info.color = colors[i];
+                    }
+                    vertices.emplace_back(create_info);
+                }
 
-        // colors
-        if (attribute.HasMember("COLOR_0")) {
-            int color_accessor_index{ attribute["COLOR_0"].GetInt() };
-            rj::GenericObject gltf_color_accessor{
-                accessors[color_accessor_index].GetObject()
-            };
-            Accessor::AccessorCreateInfo color_accessor_info{
-                make_accessor_create_info(buffer_views_, gltf_color_accessor)
-            };
-            Accessor color_accessor{ color_accessor_info };
-            color_attributes_ = color_accessor.get_vec4ushort();
+                primitives.emplace_back(vertices, indices);
+            }
+
+            meshes_.emplace_back(mesh_name, primitives);
         }
-
-        // tangents accessor
-        // int tangent_accessor_index{ attribute["TANGENT"].GetInt() };
-        // rj::GenericObject gltf_tangent_accessor{
-        //     accessors[tangent_accessor_index].GetObject()
-        // };
-
-        // gltf::Accessor::AccessorCreateInfo tangent_accessor_info{
-        //     make_accessor_create_info(buffer_views_, gltf_tangent_accessor)
-        // };
-        // gltf::Accessor tangent_accessor{ tangent_accessor_info };
     }
 
-    std::vector<math::njVec3f> GLTFAsset::get_position_attributes() const {
-        return position_attributes_;
+    std::vector<core::njMesh> GLTFAsset::get_meshes() const {
+        return meshes_;
     }
 
-    std::vector<math::njVec3f> GLTFAsset::get_normal_attributes() const {
-        return normal_attributes_;
-    }
-
-    std::vector<math::njVec4<float>> GLTFAsset::get_tangent_attributes() const {
-        return tangent_attributes_;
-    }
-
-    std::vector<math::njVec2f> GLTFAsset::get_texture_coordinates() const {
-        return tex_coords_;
-    }
-
-    std::vector<math::njVec4<uint16_t>>
-    GLTFAsset::get_color_attributes() const {
-        return color_attributes_;
-    }
-
-    std::vector<uint16_t> GLTFAsset::get_indices() const {
-        return indices_;
-    }
 }  // namespace njin::gltf

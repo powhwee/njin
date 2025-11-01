@@ -197,63 +197,74 @@ namespace njin::vulkan {
             if (renderable.type == RenderType::Mesh) {
                 main_draw_info.type = RenderType::Mesh;
                 iso_draw_info.type = RenderType::Billboard;
-                // add the vertices
+                
                 auto data{ std::get<core::MeshData>(renderable.data) };
-                const core::njMesh* mesh{ mesh_registry.get(data.mesh_name) };
-                std::vector<core::njPrimitive> primitives{
-                    mesh->get_primitives()
-                };
-                for (const core::njPrimitive& primitive : primitives) {
-                    std::vector<core::njVertex> vertices{
-                        primitive.get_vertices()
-                    };
-                    // object space positions of mesh
-                    for (const core::njVertex& vertex : vertices) {
-                        vulkan::MainDrawVertex main_draw_vertex{
-                            .x = vertex.position.x,
-                            .y = vertex.position.y,
-                            .z = vertex.position.z
+                std::string mesh_prefix = data.mesh_name + "-";
+
+                auto all_meshes_map = mesh_registry.get_map();
+
+                for (const auto& [key, mesh_ptr] : all_meshes_map) {
+                    if (key.rfind(mesh_prefix, 0) == 0) {
+                        const core::njMesh* mesh = mesh_ptr;
+
+                        std::vector<core::njPrimitive> primitives{
+                            mesh->get_primitives()
                         };
-                        main_vertices.push_back(main_draw_vertex);
+                        for (const core::njPrimitive& primitive : primitives) {
+                            std::vector<core::njVertex> vertices{
+                                primitive.get_vertices()
+                            };
+                            // object space positions of mesh
+                            for (const core::njVertex& vertex : vertices) {
+                                vulkan::MainDrawVertex main_draw_vertex{
+                                    .x = vertex.position.x,
+                                    .y = vertex.position.y,
+                                    .z = vertex.position.z
+                                };
+                                main_vertices.push_back(main_draw_vertex);
+                            }
+                        }
+
+                        std::array<IsoDrawVertex, 6> quad_vertices{
+                            calculate_billboard(mesh->get_vertices(), view_matrix)
+                        };
+                        iso_vertices.insert(iso_vertices.end(),
+                                            quad_vertices.begin(),
+                                            quad_vertices.end());
+
+                        // add RenderInfo for main_draw to queue
+                        MeshRenderInfo mesh_info{
+                            .model_index = current_model_index,
+                            .mesh_offset = current_mesh_offset,
+                            .vertex_count = mesh->get_vertex_count()
+                        };
+                        main_draw_info.info = mesh_info;
+
+                        render_infos_.add(main_draw_info);
+
+                        // add RenderInfo for iso_draw to queue
+                        BillboardRenderInfo billboard_info{
+                            .billboard_offset = current_billboard_offset,
+                            .model_index = current_model_index,
+                            .texture_index = texture_indices_.at(data.texture_name)
+                        };
+                        iso_draw_info.info = billboard_info;
+                        render_infos_.add(iso_draw_info);
+
+                        // update counters
+                        current_mesh_offset += mesh->get_vertex_count();
+                        current_billboard_offset += 6;
                     }
                 }
 
-                std::array<IsoDrawVertex, 6> quad_vertices{
-                    calculate_billboard(mesh->get_vertices(), view_matrix)
-                };
-                iso_vertices.insert(iso_vertices.end(),
-                                    quad_vertices.begin(),
-                                    quad_vertices.end());
-
-                // add the model matrices
+                // add the model matrices (once per renderable)
                 vulkan::MainDrawModel main_draw_model{
                     .model = data.global_transform
                 };
                 model_matrices.push_back(main_draw_model);
-
-                // add RenderInfo for main_draw to queue
-                MeshRenderInfo mesh_info{
-                    .model_index = current_model_index,
-                    .mesh_offset = current_mesh_offset,
-                    .vertex_count = mesh->get_vertex_count()
-                };
-                main_draw_info.info = mesh_info;
-
-                render_infos_.add(main_draw_info);
-
-                // add RenderInfo for iso_draw to queue
-                BillboardRenderInfo billboard_info{
-                    .billboard_offset = current_billboard_offset,
-                    .model_index = current_model_index,
-                    .texture_index = texture_indices_.at(data.texture_name)
-                };
-                iso_draw_info.info = billboard_info;
-                render_infos_.add(iso_draw_info);
-
-                // update counters
-                current_mesh_offset += mesh->get_vertex_count();
+                
+                // update model index (once per renderable)
                 ++current_model_index;
-                current_billboard_offset += 6;  // each billboard is 6 vertices
             }
 
             // write the data to the actual resources

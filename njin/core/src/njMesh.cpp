@@ -2,8 +2,8 @@
 
 namespace njin::core {
 
-    njMesh::njMesh(const std::vector<njPrimitive>& primitives) :
-        primitives_{ primitives } {}
+    njMesh::njMesh(const std::string& name, const std::vector<njPrimitive>& primitives) :
+        name{ name }, primitives_{ primitives } {}
 
     std::vector<njVertex> njMesh::get_vertices() const {
         std::vector<njVertex> vertices{};
@@ -24,21 +24,19 @@ namespace njin::core {
     }
 
     int njMesh::get_size() const {
-        // gather all the vertices
-        std::vector<njVertex> vertices{};
+        int size = 0;
         for (const auto& primitive : primitives_) {
-            std::vector<njVertex> primitive_vertices{
-                primitive.get_vertices()
-            };
-            vertices.insert(vertices.end(),
-                            primitive_vertices.begin(),
-                            primitive_vertices.end());
+            size += primitive.get_vertices().size() * sizeof(njVertex);
         }
-        return vertices.size() * sizeof(njVertex);
+        return size;
     }
 
     uint32_t njMesh::get_vertex_count() const {
-        return primitives_.size() * 3;
+        uint32_t count = 0;
+        for (const auto& primitive : primitives_) {
+            count += primitive.get_vertices().size();
+        }
+        return count;
     }
 
 }  // namespace njin::core

@@ -90,8 +90,18 @@ namespace njin::gltf {
          */
         std::vector<uint16_t> get_scalar() const;
 
+        /**
+         * Retrieve all elements the accessor references as an array of uint32_t
+         * This is most commonly used to get the result of the indices accessor
+         * @return Array of scalars
+         * @note User is responsible for ensuring the type and component type
+         * of this accessor are "SCALAR" and "UNSIGNED_INT"
+         */
+        std::vector<uint32_t> get_scalar_u32() const;
+
         private:
         using Element = std::variant<uint16_t,
+                                     uint32_t,
                                      math::njVec2f,
                                      math::njVec3f,
                                      math::njVec4f,

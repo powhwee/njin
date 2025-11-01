@@ -11,7 +11,7 @@ namespace njin::core {
             njVertex two{ info };
             njVertex three{ info };
 
-            REQUIRE_NOTHROW(njPrimitive{ { one, two, three } });
+            REQUIRE_NOTHROW(njPrimitive{ { one, two, three }, {} });
         }
     }
 }  // namespace njin::core
