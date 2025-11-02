@@ -2,7 +2,7 @@
     "meshes" : [
         {
             "name": "cube",
-            "path": "mesh/cube.glb"
+            "path": "mesh/toy_rocket.glb"
         } ,
         {
             "name": "player",

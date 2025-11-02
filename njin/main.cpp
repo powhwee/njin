@@ -148,7 +148,7 @@ int main() {
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
-        float angle = time * 0.5f;
+        float angle = time * .0f;
         float radius = 14.0f;
         float new_x = radius * cos(angle);
         float new_z = radius * sin(angle);
