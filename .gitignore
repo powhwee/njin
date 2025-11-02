@@ -1,6 +1,7 @@
 # build artifacts
 dist/
 temp/
+.DS_Store
 build/
 
 # temp files

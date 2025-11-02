@@ -47,10 +47,16 @@ namespace njin::vulkan {
                     .get_vertex_buffer(subpass_info.vertex_buffer.name)
                 };
 
+                VkBuffer index_buffer = VK_NULL_HANDLE;
+                if (subpass_info.index_buffer_name.has_value()) {
+                    index_buffer = resources.index_buffers.get_index_buffer(subpass_info.index_buffer_name.value());
+                }
+
                 BindSet bind_set{ .pipeline = pipeline,
                                   .layout = layout,
                                   .descriptor_sets = descriptor_sets,
-                                  .vertex_buffer = vertex_buffer };
+                                  .vertex_buffer = vertex_buffer,
+                                  .index_buffer = index_buffer };
 
                 // make the subpass module
                 SubpassModule module(subpass_info.name, bind_set);

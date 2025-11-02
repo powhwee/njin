@@ -212,6 +212,7 @@ namespace njin::vulkan {
         std::string name;
         PipelineInfo pipeline;
         VertexBufferInfo vertex_buffer;
+        std::optional<std::string> index_buffer_name;
         std::vector<AttachmentReference> color_attachments;
         std::vector<AttachmentReference> depth_attachments;
     };

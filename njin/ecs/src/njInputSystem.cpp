@@ -21,13 +21,19 @@ namespace njin::ecs {
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                *should_run_ = false;
+                return;
+            }
+            if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE) {
+                *should_run_ = false;
+                return;
+            }
+
             for (View<njInputComponent>& view : views) {
                 const auto input{ std::get<njInputComponent*>(view.second) };
 
                 switch (event.type) {
-                case SDL_EVENT_QUIT:
-                    *should_run_ = false;
-                    break;
                 case SDL_EVENT_KEY_DOWN:
                     switch (event.key.key) {
                     case SDLK_W:
@@ -42,9 +48,6 @@ namespace njin::ecs {
                     case SDLK_D:
                         input->d = true;
                         break;
-                    }
-                    if (event.key.key == SDLK_ESCAPE) {
-                        *should_run_ = false;
                     }
                     break;
                 case SDL_EVENT_KEY_UP:

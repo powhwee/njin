@@ -1,6 +1,7 @@
 #include "ecs/njRenderSystem.h"
 
 #include <numbers>
+#include <cmath>
 
 #include "core/Types.h"
 #include "ecs/Components.h"
@@ -67,7 +68,7 @@ namespace njin::ecs {
                                    std::numbers::pi_v<float> / 180.f };
 
                 // right, left
-                const float r{ std::atanf(angle / 2.f) * settings.near };
+                const float r{ std::tanf(angle / 2.f) * settings.near };
                 const float l{ -r };
 
                 // top, bottom

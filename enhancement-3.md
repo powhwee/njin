@@ -139,3 +139,55 @@ During the refactoring, the `mesh_offset` field in `MeshRenderInfo` was renamed 
 2.  **Consistency:** To align with the `vertexOffset` parameter in the `vkCmdDrawIndexed` function, even though in the current implementation this value is `0` due to the use of global indices.
 
 This change improves code readability and consistency with the underlying Vulkan API. The comment for `index_count` was also corrected to reflect that it stores the number of indices, not vertices.
+
+## 5. Post-Enhancement #2: Debugging the Invisible Cube
+
+After implementing indexed drawing, the cube was still not visible. This triggered a deeper debugging session that uncovered several independent, critical bugs.
+
+### 5.1. The Debugging Process
+
+The screen was blank, but `printf` logs confirmed the main loop was running. This suggested the issue was in the rendering pipeline itself or the data being fed to it. The debugging strategy involved several steps:
+
+1.  **Enabling Camera Rotation:** To better visualize the scene, a continuous camera rotation was implemented in `main.cpp`. This led to the observation that *something* was rendering, but it was distorted ("shrinking and expanding"), and it wasn't the cube. This was the first major clue that the problem was more complex than a simple missing object.
+
+2.  **Isolating the Cube:** To simplify the scene, the textured `player` object was disabled in `main.cpp`. This unexpectedly caused two new problems:
+    *   The screen became completely blank.
+    *   The application no longer responded to quit events.
+
+### 5.2. Bug Fixes
+
+This debugging process revealed a cascade of unrelated bugs that had been masking each other.
+
+#### 5.2.1. Bug: Unresponsive Application
+
+*   **Cause:** The `njInputSystem` only processed events (like `SDL_EVENT_QUIT`) if an entity with an `njInputComponent` existed. When the player was disabled, no such entity existed, and the quit logic was never reached.
+*   **Fix:** The event polling logic in `njInputSystem.cpp` was refactored to handle `SDL_EVENT_QUIT` and the `ESCAPE` key press regardless of whether any input components are in the scene.
+
+#### 5.2.2. Bug: `std::out_of_range` Crash
+
+*   **Cause:** After fixing the input system, the program crashed. The `Renderer` constructor was assuming that every subpass had an index buffer, and it tried to fetch one for the `"iso_draw"` subpass (used for textures), which does not use one.
+*   **Fix:** The configuration was updated to make the link between a subpass and an index buffer explicit and optional. `SubpassInfo` in `config_classes.h` was given an `optional<string> index_buffer_name`, and the `Renderer` was updated to only fetch and bind an index buffer if it was specified in the configuration.
+
+#### 5.2.3. Bug: Invalid Projection Matrix
+
+*   **Cause:** The original "shrinking and expanding" visual artifact was traced to a mathematical error in `njRenderSystem.cpp`. The perspective projection matrix calculation was incorrectly using `std::atanf` (arc tangent) instead of `std::tanf` (tangent).
+*   **Fix:** The calculation was corrected to use `std::tanf`. This fixed the extreme visual distortion, which then revealed that the cube was still not rendering at all.
+
+#### 5.2.4. Bug: Incorrect glTF Attribute Parsing (`byte_stride`)
+
+*   **Cause:** This was the root cause of the invisible cube. The `Accessor` class, which reads geometry data from the `.glb` file, was not correctly handling interleaved vertex data. It was ignoring the `byte_stride` property and assuming all vertex attributes were packed sequentially. When it encountered the `cube.glb` file, which uses an interleaved layout, it was reading garbage data for the vertex positions.
+*   **Fix:** The `Accessor` constructor was completely rewritten to correctly read the `byte_stride` from the `BufferView` and use it to calculate the memory offset for each vertex attribute. This required adding `get_byte_stride()` to the `BufferView` class.
+
+#### 5.2.5. Bug: `const` Member Assignment
+
+*   **Cause:** The rewrite of the `Accessor` constructor introduced a compile error because it was attempting to assign to the `elements_` member variable, which was declared `const`.
+*   **Fix:** The constructor was refactored to use a lambda function in the member initializer list, which is the correct C++ pattern for initializing a `const` member with complex logic.
+
+#### 5.2.6. Bug: `VK_NULL_HANDLE` Index Buffer
+
+*   **Cause:** After all other bugs were fixed, Vulkan validation layers reported that `vkCmdBindIndexBuffer` was being called with a null handle. The `Renderer` was not correctly passing the index buffer handle to the `SubpassModule`'s `BindSet`.
+*   **Fix:** The `Renderer` constructor was updated to correctly fetch the newly created index buffer and place it in the `BindSet` for the main drawing subpass.
+
+### 5.3. Conclusion
+
+The successful rendering of the cube was only achieved after fixing all six of these independent bugs. The process highlights the importance of validation layers and systematic debugging, as several issues were masking each other, creating a confusing and misleading set of initial symptoms.

@@ -47,7 +47,10 @@ namespace njin::gltf {
          */
         std::vector<std::byte> get() const;
 
+        std::optional<int> get_byte_stride() const;
+
         private:
         std::vector<std::byte> data_{};
+        std::optional<int> byte_stride_{};
     };
 }  // namespace njin::gltf

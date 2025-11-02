@@ -192,7 +192,7 @@ namespace njin::vulkan {
 
     inline RasterizationInfo RASTERIZATION_INFO_MAIN_DRAW{
         .polygon_mode = VK_POLYGON_MODE_LINE,
-        .cull_mode = VK_CULL_MODE_BACK_BIT,
+        .cull_mode = VK_CULL_MODE_NONE,
         .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .line_width = 1.f
     };
@@ -386,6 +386,7 @@ namespace njin::vulkan {
         .name = "draw",
         .pipeline = PIPELINE_INFO_MAIN_DRAW,
         .vertex_buffer = VERTEX_BUFFER_INFO_MAIN_DRAW,
+        .index_buffer_name = "main_draw",
         .color_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN },
         .depth_attachments = { ATTACHMENT_REFERENCE_MAIN_DRAW_DEPTH }
     };

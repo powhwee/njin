@@ -140,7 +140,11 @@ namespace njin::vulkan {
     }
 
     std::vector<RenderInfo> RenderBuckets::get(const RenderKey& key) const {
-        return render_infos_.at(key);
+        auto it = render_infos_.find(key);
+        if (it == render_infos_.end()) {
+            return {};
+        }
+        return it->second;
     }
 
     RenderInfos::RenderInfos(
@@ -242,13 +246,15 @@ namespace njin::vulkan {
                                             quad_vertices.begin(),
                                             quad_vertices.end());
 
-                        BillboardRenderInfo billboard_info{
-                            .billboard_offset = current_billboard_offset,
-                            .model_index = current_model_index,
-                            .texture_index = texture_indices_.at(data.texture_name)
-                        };
-                        iso_draw_info.info = billboard_info;
-                        render_infos_.add(iso_draw_info);
+                        if (!data.texture_name.empty()) {
+                            BillboardRenderInfo billboard_info{
+                                .billboard_offset = current_billboard_offset,
+                                .model_index = current_model_index,
+                                .texture_index = texture_indices_.at(data.texture_name)
+                            };
+                            iso_draw_info.info = billboard_info;
+                            render_infos_.add(iso_draw_info);
+                        }
 
                         current_billboard_offset += 6;
                     }

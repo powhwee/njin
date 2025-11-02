@@ -104,13 +104,11 @@ int main() {
     core::RenderBuffer render_buffer{};
     engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
 
-    ecs::OrthographicCameraSettings camera_settings{ .near = { 1.f },
-                                                     .far = { 1000.f },
-                                                     .scale = { 10 } };
+    ecs::PerspectiveCameraSettings camera_settings{ .near = 1.f, .far = 1000.f, .horizontal_fov = 90.f };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
         .transform = ecs::njTransformComponent::make(10.f, 8.f, 10.f),
-        .camera = { .type = ecs::njCameraType::Orthographic,
+        .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
                     .look_at = { 0.f, 0.f, 0.f },
                     .aspect = { 16.f / 9.f },
@@ -123,23 +121,23 @@ int main() {
     ecs::njObjectArchetypeCreateInfo object_info{
         .name = "cube",
         .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
-        .mesh = { .mesh = "cube", .texture = "rocks" }
+        .mesh = { .mesh = "cube", .texture = "" }
     };
     ecs::njObjectArchetype object_archetype{ object_info };
     engine.add_archetype(object_archetype);
 
-    ecs::njInputComponent input{};
+    // ecs::njInputComponent input{};
 
-    ecs::njPlayerArchetypeCreateInfo player_archetype_info{
-        .name = "player",
-        .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
-        .input = {},
-        .mesh = { .mesh = "player", .texture = "statue" },
-        .intent = {},
-        .physics = {}
-    };
-    ecs::njPlayerArchetype player_archetype{ player_archetype_info };
-    engine.add_archetype(player_archetype);
+    // ecs::njPlayerArchetypeCreateInfo player_archetype_info{
+    //     .name = "player",
+    //     .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
+    //     .input = {},
+    //     .mesh = { .mesh = "player", .texture = "statue" },
+    //     .intent = {},
+    //     .physics = {}
+    // };
+    // ecs::njPlayerArchetype player_archetype{ player_archetype_info };
+    // engine.add_archetype(player_archetype);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -158,8 +156,6 @@ int main() {
         camera_transform_component->transform[0][3] = new_x;
         camera_transform_component->transform[1][3] = 8.0f;
         camera_transform_component->transform[2][3] = new_z;
-
-        printf("x: %f, z: %f\n", new_x, new_z);
 
         engine.update();
         vulkan::RenderInfos render_queue{ mesh_registry,

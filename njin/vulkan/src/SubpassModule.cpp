@@ -47,10 +47,13 @@ namespace njin::vulkan {
                                1,
                                &(bind_set_.vertex_buffer),
                                &offsets);
-        vkCmdBindIndexBuffer(command_buffer.get(),
-                             bind_set_.index_buffer,
-                             0,
-                             VK_INDEX_TYPE_UINT32);
+
+        if (bind_set_.index_buffer != VK_NULL_HANDLE) {
+            vkCmdBindIndexBuffer(command_buffer.get(),
+                                 bind_set_.index_buffer,
+                                 0,
+                                 VK_INDEX_TYPE_UINT32);
+        }
         vkCmdBindDescriptorSets(command_buffer.get(),
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 bind_set_.layout,
