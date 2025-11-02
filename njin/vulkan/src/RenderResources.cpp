@@ -16,6 +16,7 @@ namespace njin::vulkan {
                             descriptor_sets,
                             infos.pipelines },
         vertex_buffers{ logical_device, physical_device, infos.vertex_buffers },
+        index_buffers{ logical_device, physical_device, infos.index_buffers },
         framebuffers{ logical_device, render_passes, attachment_images },
         command_pool_{ logical_device,
                        physical_device.get_graphics_family_index() } {}

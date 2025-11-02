@@ -367,6 +367,12 @@ namespace njin::vulkan {
         .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
         .max_vertex_count = 1000
     };
+
+    inline IndexBufferInfo INDEX_BUFFER_INFO_MAIN_DRAW{
+        .name = "main_draw",
+        .max_index_count = 3000
+    };
+
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{
         .attachment_name = "swapchain",
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL

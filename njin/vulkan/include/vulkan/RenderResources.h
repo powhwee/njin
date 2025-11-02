@@ -7,6 +7,7 @@
 #include "vulkan/RenderPass.h"
 #include "vulkan/RenderPasses.h"
 #include "vulkan/VertexBuffers.h"
+#include "vulkan/IndexBuffers.h"
 
 namespace njin::vulkan {
 
@@ -19,6 +20,7 @@ namespace njin::vulkan {
         std::vector<RenderPassInfo> render_passes;
         std::vector<PipelineInfo> pipelines;
         std::vector<VertexBufferInfo> vertex_buffers;
+        std::vector<IndexBufferInfo> index_buffers;
     };
 
     /**
@@ -44,6 +46,7 @@ namespace njin::vulkan {
         RenderPasses render_passes;
         GraphicsPipelines graphics_pipelines;
         VertexBuffers vertex_buffers;
+        IndexBuffers index_buffers;
         FramebufferSets framebuffers;
 
         // for renderer so that it can acquire command buffers for drawing etc

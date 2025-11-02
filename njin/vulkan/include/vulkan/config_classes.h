@@ -157,6 +157,14 @@ namespace njin::vulkan {
     };
 
     /**
+     * Index buffer configurations
+     */
+    struct IndexBufferInfo {
+        std::string name;
+        uint32_t max_index_count;
+    };
+
+    /**
      * Render pass configuration
      */
 

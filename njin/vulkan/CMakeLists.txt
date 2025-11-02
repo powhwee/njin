@@ -40,6 +40,7 @@ set(SOURCES src/query.cpp
     src/GraphicsPipelines.cpp
     src/Renderer.cpp
     src/VertexBuffers.cpp
+    src/IndexBuffers.cpp
     src/FramebufferSet.cpp
     src/FramebufferSets.cpp
     src/RenderInfos.cpp

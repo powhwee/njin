@@ -171,6 +171,7 @@ namespace njin::vulkan {
                             const math::njMat4f& projection_matrix) {
         // serialize all the vertices of required meshes into an array
         std::vector<vulkan::MainDrawVertex> main_vertices{};
+        std::vector<uint32_t> main_indices{};
 
         // serialize all the corresponding model matrices into an array
         std::vector<vulkan::MainDrawModel> model_matrices{};
@@ -181,11 +182,11 @@ namespace njin::vulkan {
         std::vector<math::njMat4f> view_projection{ view_matrix,
                                                     projection_matrix };
 
-        // vertex offset of current mesh into vertex buffer
-        uint32_t current_mesh_offset{ 0 };
+        uint32_t current_vertex_offset{ 0 };
+        uint32_t current_index_offset{ 0 };
         uint32_t current_model_index{ 0 };
-        // vertex offset of current billboard into vertex buffer
         uint32_t current_billboard_offset{ 0 };
+
         for (const core::Renderable& renderable :
              render_buffer_->get_renderables()) {
             RenderKey main_draw_key{ "main", "draw" };
@@ -207,15 +208,8 @@ namespace njin::vulkan {
                     if (key.rfind(mesh_prefix, 0) == 0) {
                         const core::njMesh* mesh = mesh_ptr;
 
-                        std::vector<core::njPrimitive> primitives{
-                            mesh->get_primitives()
-                        };
-                        for (const core::njPrimitive& primitive : primitives) {
-                            std::vector<core::njVertex> vertices{
-                                primitive.get_vertices()
-                            };
-                            // object space positions of mesh
-                            for (const core::njVertex& vertex : vertices) {
+                        for (const core::njPrimitive& primitive : mesh->get_primitives()) {
+                            for (const core::njVertex& vertex : primitive.get_vertices()) {
                                 vulkan::MainDrawVertex main_draw_vertex{
                                     .x = vertex.position.x,
                                     .y = vertex.position.y,
@@ -223,6 +217,22 @@ namespace njin::vulkan {
                                 };
                                 main_vertices.push_back(main_draw_vertex);
                             }
+
+                            for (uint32_t index : primitive.get_indices()) {
+                                main_indices.push_back(index + current_vertex_offset);
+                            }
+
+                            MeshRenderInfo mesh_info{
+                                .model_index = current_model_index,
+                                .vertex_offset = 0, 
+                                .first_index = current_index_offset,
+                                .index_count = static_cast<uint32_t>(primitive.get_indices().size())
+                            };
+                            main_draw_info.info = mesh_info;
+                            render_infos_.add(main_draw_info);
+
+                            current_vertex_offset += primitive.get_vertices().size();
+                            current_index_offset += primitive.get_indices().size();
                         }
 
                         std::array<IsoDrawVertex, 6> quad_vertices{
@@ -232,17 +242,6 @@ namespace njin::vulkan {
                                             quad_vertices.begin(),
                                             quad_vertices.end());
 
-                        // add RenderInfo for main_draw to queue
-                        MeshRenderInfo mesh_info{
-                            .model_index = current_model_index,
-                            .mesh_offset = current_mesh_offset,
-                            .vertex_count = mesh->get_vertex_count()
-                        };
-                        main_draw_info.info = mesh_info;
-
-                        render_infos_.add(main_draw_info);
-
-                        // add RenderInfo for iso_draw to queue
                         BillboardRenderInfo billboard_info{
                             .billboard_offset = current_billboard_offset,
                             .model_index = current_model_index,
@@ -251,23 +250,18 @@ namespace njin::vulkan {
                         iso_draw_info.info = billboard_info;
                         render_infos_.add(iso_draw_info);
 
-                        // update counters
-                        current_mesh_offset += mesh->get_vertex_count();
                         current_billboard_offset += 6;
                     }
                 }
 
-                // add the model matrices (once per renderable)
                 vulkan::MainDrawModel main_draw_model{
                     .model = data.global_transform
                 };
                 model_matrices.push_back(main_draw_model);
                 
-                // update model index (once per renderable)
                 ++current_model_index;
             }
 
-            // write the data to the actual resources
             render_resources.descriptor_sets
             .write_descriptor_data("mvp", "model", model_matrices);
 
@@ -276,6 +270,8 @@ namespace njin::vulkan {
 
             render_resources.vertex_buffers.load_into_buffer("main_draw",
                                                              main_vertices);
+            render_resources.index_buffers.load_into_buffer("main_draw",
+                                                             main_indices);
 
             render_resources.vertex_buffers.load_into_buffer("iso_draw",
                                                              iso_vertices);

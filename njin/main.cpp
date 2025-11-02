@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <ranges>
 #include <thread>
 
@@ -73,7 +74,8 @@ int main() {
         .render_passes = { RENDER_PASS_INFO_MAIN, RENDER_PASS_INFO_ISO },
         .pipelines = { PIPELINE_INFO_MAIN_DRAW, PIPELINE_INFO_ISO_DRAW },
         .vertex_buffers = { VERTEX_BUFFER_INFO_MAIN_DRAW,
-                            VERTEX_BUFFER_INFO_ISO_DRAW }
+                            VERTEX_BUFFER_INFO_ISO_DRAW },
+        .index_buffers = { INDEX_BUFFER_INFO_MAIN_DRAW }
     };
 
     RenderResources resources{ logical_device,
@@ -138,7 +140,27 @@ int main() {
     };
     ecs::njPlayerArchetype player_archetype{ player_archetype_info };
     engine.add_archetype(player_archetype);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     while (should_run) {
+        auto camera_views = engine.get_view<njin::ecs::njTransformComponent, njin::ecs::njCameraComponent>();
+        auto camera_transform_component = std::get<0>(camera_views[0].second);
+
+        auto current_time = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+
+        float angle = time * 0.5f;
+        float radius = 14.0f;
+        float new_x = radius * cos(angle);
+        float new_z = radius * sin(angle);
+
+        camera_transform_component->transform[0][3] = new_x;
+        camera_transform_component->transform[1][3] = 8.0f;
+        camera_transform_component->transform[2][3] = new_z;
+
+        printf("x: %f, z: %f\n", new_x, new_z);
+
         engine.update();
         vulkan::RenderInfos render_queue{ mesh_registry,
                                           texture_registry,

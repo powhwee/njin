@@ -16,6 +16,7 @@ namespace njin::vulkan {
         VkPipelineLayout layout;
         std::vector<VkDescriptorSet> descriptor_sets;
         VkBuffer vertex_buffer;
+        VkBuffer index_buffer;
     };
 
     /**

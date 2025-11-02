@@ -47,6 +47,10 @@ namespace njin::vulkan {
                                1,
                                &(bind_set_.vertex_buffer),
                                &offsets);
+        vkCmdBindIndexBuffer(command_buffer.get(),
+                             bind_set_.index_buffer,
+                             0,
+                             VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(command_buffer.get(),
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 bind_set_.layout,
@@ -67,11 +71,12 @@ namespace njin::vulkan {
                                    0,
                                    4,
                                    &info.model_index);
-                vkCmdDraw(command_buffer.get(),
-                          info.vertex_count,
-                          1,
-                          info.mesh_offset,
-                          0);
+                vkCmdDrawIndexed(command_buffer.get(),
+                                 info.index_count,
+                                 1,
+                                 info.first_index,
+                                 info.vertex_offset,
+                                 0);
             } else if (render_info.type == RenderType::Billboard) {
                 auto info{ std::get<BillboardRenderInfo>(render_info.info) };
                 vkCmdPushConstants(command_buffer.get(),

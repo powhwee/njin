@@ -20,8 +20,9 @@ namespace njin::vulkan {
      */
     struct MeshRenderInfo {
         uint32_t model_index;   // index of model matrix
-        uint32_t mesh_offset;   // start vertex index of mesh
-        uint32_t vertex_count;  // number of vertices in mesh
+        uint32_t vertex_offset;  // start vertex index of mesh
+        uint32_t first_index;
+        uint32_t index_count;  // number of indices in mesh
     };
 
     /**
