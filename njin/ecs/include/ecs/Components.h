@@ -23,9 +23,10 @@ namespace njin::ecs {
      * system
      */
     struct njTransformComponent {
-        static njTransformComponent make(float x, float y, float z) {
-            return { .transform = { math::njMat4Type::Translation,
-                                    { x, y, z } } };
+        static njTransformComponent make(float x, float y, float z, float scale_x = 1.f, float scale_y = 1.f, float scale_z = 1.f) {
+            math::njMat4f translation_matrix{ math::njMat4Type::Translation, { x, y, z } };
+            math::njMat4f scale_matrix{ math::njMat4Type::Scale, { scale_x, scale_y, scale_z } };
+            return { .transform = translation_matrix * scale_matrix };
         }
 
         // the global transform of an entity =
@@ -49,7 +50,7 @@ namespace njin::ecs {
      * Mesh data
      */
     struct njMeshComponent {
-        std::string mesh;     // name of mesh
+        std::string registry_key;     // key for mesh in registry
         std::string texture;  // name of texture
     };
 

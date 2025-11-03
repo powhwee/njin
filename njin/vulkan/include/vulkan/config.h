@@ -181,11 +181,10 @@ namespace njin::vulkan {
 
     using MainDrawVertex = VERTEX_INPUT_MAIN_DRAW_FORMAT;
 
-    inline VertexInputInfo VERTEX_INPUT_INFO_MAIN_DRAW{
-        .name = "vertex",
-        .vertex_size = 12,
-        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION }
-    };
+    inline VertexInputInfo VERTEX_INPUT_INFO_MAIN_DRAW(
+        "vertex",
+        { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION }
+    );
     inline InputAssemblyInfo INPUT_ASSEMBLY_INFO_MAIN_DRAW{
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
     };
@@ -278,12 +277,11 @@ namespace njin::vulkan {
         .offset = 12
     };
 
-    inline VertexInputInfo VERTEX_INPUT_INFO_ISO_DRAW{
-        .name = "vertex",
-        .vertex_size = 20,
-        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_ISO_DRAW_POSITION,
-                             VERTEX_ATTRIBUTE_INFO_ISO_DRAW_UV }
-    };
+    inline VertexInputInfo VERTEX_INPUT_INFO_ISO_DRAW(
+        "vertex",
+        { VERTEX_ATTRIBUTE_INFO_ISO_DRAW_POSITION,
+          VERTEX_ATTRIBUTE_INFO_ISO_DRAW_UV }
+    );
 
     struct VERTEX_INPUT_ISO_DRAW_FORMAT {
         // position
@@ -364,13 +362,13 @@ namespace njin::vulkan {
      */
     inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
-        .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
-        .max_vertex_count = 1000
+        .vertex_input = VertexInputInfo("vertex", { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION }),
+        .max_vertex_count = 100000
     };
 
     inline IndexBufferInfo INDEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
-        .max_index_count = 3000
+        .max_index_count = 150000
     };
 
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{
@@ -424,7 +422,7 @@ namespace njin::vulkan {
     */
     inline VertexBufferInfo VERTEX_BUFFER_INFO_ISO_DRAW{
         .name = "iso_draw",
-        .vertex_input = VERTEX_INPUT_INFO_ISO_DRAW,
+        .vertex_input = VertexInputInfo("vertex", { VERTEX_ATTRIBUTE_INFO_ISO_DRAW_POSITION, VERTEX_ATTRIBUTE_INFO_ISO_DRAW_UV }),
         .max_vertex_count = 1000
     };
 

@@ -11,6 +11,7 @@ namespace njin::vulkan {
                         buffer_info.max_index_count,
                 .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT
             };
+            printf("Creating index buffer: %s with size: %d\n", buffer_info.name.c_str(), settings.size);
             Buffer buffer{ device, physical_device, settings };
             buffers_.emplace(buffer_info.name, std::move(buffer));
         };

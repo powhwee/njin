@@ -102,7 +102,7 @@ int main() {
     engine.add_system(std::make_unique<ecs::njInputSystem>(should_run));
     engine.add_system(std::make_unique<ecs::njMovementSystem>());
     core::RenderBuffer render_buffer{};
-    engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
+    engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer, mesh_registry));
 
     ecs::PerspectiveCameraSettings camera_settings{ .near = 1.f, .far = 1000.f, .horizontal_fov = 90.f };
     ecs::njCameraArchetypeCreateInfo camera_info{
@@ -120,8 +120,8 @@ int main() {
 
     ecs::njObjectArchetypeCreateInfo object_info{
         .name = "cube",
-        .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
-        .mesh = { .mesh = "cube", .texture = "" }
+        .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f, 100.f, 100.f, 100.f),
+        .mesh_component = { .registry_key = "cube-Cube", .texture = "" }
     };
     ecs::njObjectArchetype object_archetype{ object_info };
     engine.add_archetype(object_archetype);
@@ -148,7 +148,7 @@ int main() {
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
-        float angle = time * .0f;
+        float angle = time * 2.0f;
         float radius = 14.0f;
         float new_x = radius * cos(angle);
         float new_z = radius * sin(angle);

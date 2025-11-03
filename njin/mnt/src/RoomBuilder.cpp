@@ -28,7 +28,7 @@ namespace mnt {
                 ecs::njObjectArchetypeCreateInfo info{
                     .name = "",
                     .transform = transform,
-                    .mesh = { .mesh = "cube", .texture = "statue" }
+                    .mesh_component = { .registry_key = "cube", .texture = "statue" }
                 };
 
                 tiles.emplace_back(info);

@@ -65,8 +65,25 @@ namespace njin::vulkan {
 
     struct VertexInputInfo {
         std::string name;
-        uint32_t vertex_size;  // total size in bytes of vertex
+        uint32_t vertex_size;
         std::vector<VertexAttributeInfo> attribute_infos;
+
+        // Constructor to calculate vertex_size
+        VertexInputInfo(std::string name, std::vector<VertexAttributeInfo> attribute_infos)
+            : name(std::move(name)), attribute_infos(std::move(attribute_infos)) {
+            vertex_size = 0;
+            for (const auto& attr : this->attribute_infos) {
+                // Simplified calculation based on known formats
+                if (attr.format == VK_FORMAT_R32G32B32_SFLOAT) { // vec3f
+                    vertex_size += 12;
+                } else if (attr.format == VK_FORMAT_R32G32B32A32_SFLOAT) { // vec4f
+                    vertex_size += 16;
+                } else if (attr.format == VK_FORMAT_R32G32_SFLOAT) { // vec2f
+                    vertex_size += 8;
+                }
+                // Add other formats as needed
+            }
+        }
     };
 
     struct InputAssemblyInfo {

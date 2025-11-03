@@ -7,7 +7,7 @@ namespace njin::ecs {
     struct njObjectArchetypeCreateInfo {
         std::string name;
         njTransformComponent transform;
-        njMeshComponent mesh;
+        njMeshComponent mesh_component;
     };
 
     /**

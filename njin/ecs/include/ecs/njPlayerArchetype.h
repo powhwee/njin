@@ -7,7 +7,7 @@ namespace njin::ecs {
         std::string name;
         njTransformComponent transform;
         njInputComponent input;
-        njMeshComponent mesh;
+        njMeshComponent mesh_component;
         njMovementIntentComponent intent;
         njPhysicsComponent physics;
     };

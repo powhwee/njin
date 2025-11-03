@@ -3,15 +3,25 @@
 
 #include "core/njPrimitive.h"
 #include "core/njVertex.h"
+#include "math/njVec3.h"
 
 namespace njin::core {
+
+    struct njMeshCreateInfo {
+        std::string name;
+        std::vector<njPrimitive> primitives;
+        math::njVec3f min_bounds;
+        math::njVec3f max_bounds;
+    };
 
     class njMesh {
         public:
         std::string name;
+        math::njVec3f min_bounds;
+        math::njVec3f max_bounds;
 
         njMesh() = default;
-        njMesh(const std::string& name, const std::vector<njPrimitive>& primitives);
+        njMesh(const njMeshCreateInfo& info);
 
         /**
          * Get the list of all vertices in this mesh

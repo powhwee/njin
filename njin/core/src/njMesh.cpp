@@ -2,8 +2,11 @@
 
 namespace njin::core {
 
-    njMesh::njMesh(const std::string& name, const std::vector<njPrimitive>& primitives) :
-        name{ name }, primitives_{ primitives } {}
+    njMesh::njMesh(const njMeshCreateInfo& info) :
+        name{ info.name },
+        min_bounds{ info.min_bounds },
+        max_bounds{ info.max_bounds },
+        primitives_{ info.primitives } {}
 
     std::vector<njVertex> njMesh::get_vertices() const {
         std::vector<njVertex> vertices{};

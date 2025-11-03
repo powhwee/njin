@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 
+#include <limits>
 #include <rapidjson/document.h>
 #include <vulkan/vulkan_core.h>
 
@@ -201,7 +202,10 @@ namespace njin::gltf {
 
         for (const auto& mesh : meshes) {
             std::string mesh_name = mesh["name"].GetString();
+            printf("GLTFAsset: Extracted mesh name: %s\n", mesh_name.c_str());
             std::vector<core::njPrimitive> primitives{};
+            math::njVec3f current_min_bounds{ std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
+            math::njVec3f current_max_bounds{ std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest() };
 
             for (const auto& primitive : mesh["primitives"].GetArray()) {
                 // indices
@@ -308,12 +312,26 @@ namespace njin::gltf {
                         create_info.color = colors[i];
                     }
                     vertices.emplace_back(create_info);
+
+                    // Update bounds
+                    current_min_bounds.x = std::min(current_min_bounds.x, positions[i].x);
+                    current_min_bounds.y = std::min(current_min_bounds.y, positions[i].y);
+                    current_min_bounds.z = std::min(current_min_bounds.z, positions[i].z);
+                    current_max_bounds.x = std::max(current_max_bounds.x, positions[i].x);
+                    current_max_bounds.y = std::max(current_max_bounds.y, positions[i].y);
+                    current_max_bounds.z = std::max(current_max_bounds.z, positions[i].z);
                 }
 
                 primitives.emplace_back(vertices, indices);
             }
 
-            meshes_.emplace_back(mesh_name, primitives);
+            core::njMeshCreateInfo mesh_create_info{
+                .name = mesh_name,
+                .primitives = primitives,
+                .min_bounds = current_min_bounds,
+                .max_bounds = current_max_bounds
+            };
+            meshes_.emplace_back(mesh_create_info);
         }
     }
 
