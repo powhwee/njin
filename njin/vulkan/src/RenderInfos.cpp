@@ -217,7 +217,20 @@ namespace njin::vulkan {
                                 vulkan::MainDrawVertex main_draw_vertex{
                                     .x = vertex.position.x,
                                     .y = vertex.position.y,
-                                    .z = vertex.position.z
+                                    .z = vertex.position.z,
+                                    .nx = vertex.normal.x,
+                                    .ny = vertex.normal.y,
+                                    .nz = vertex.normal.z,
+                                    .tx = vertex.tangent.x,
+                                    .ty = vertex.tangent.y,
+                                    .tz = vertex.tangent.z,
+                                    .tw = vertex.tangent.w,
+                                    .u = vertex.tex_coord.x,
+                                    .v = vertex.tex_coord.y,
+                                    .r = vertex.color.x,
+                                    .g = vertex.color.y,
+                                    .b = vertex.color.z,
+                                    .a = vertex.color.w
                                 };
                                 main_vertices.push_back(main_draw_vertex);
                             }

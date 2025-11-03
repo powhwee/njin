@@ -107,7 +107,7 @@ int main() {
     ecs::PerspectiveCameraSettings camera_settings{ .near = 1.f, .far = 1000.f, .horizontal_fov = 90.f };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = ecs::njTransformComponent::make(10.f, 8.f, 10.f),
+        .transform = ecs::njTransformComponent::make(10.f, -8.f, 10.f),
         .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
                     .look_at = { 0.f, 0.f, 0.f },
@@ -148,7 +148,7 @@ int main() {
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
-        float angle = time * .0f;
+        float angle = time * 2.0f;
         float radius = 14.0f;
         float new_x = radius * cos(angle);
         float new_z = radius * sin(angle);

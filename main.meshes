@@ -2,7 +2,7 @@
     "meshes" : [
         {
             "name": "cube",
-            "path": "mesh/cube.glb"
+            "path": "mesh/cc2.glb"
         } ,
         {
             "name": "player",

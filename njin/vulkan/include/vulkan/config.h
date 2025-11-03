@@ -167,32 +167,37 @@ namespace njin::vulkan {
     inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_COLOR{
         .name = "color",
         .location = 4,
-        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+        .format = VK_FORMAT_R16G16B16A16_UNORM,
         .offset = 48
     };
 
     // data format for the vertex input of the main render pass - draw subpass
-    // 4 + 4 + 4 = 12B vertex
     struct VERTEX_INPUT_MAIN_DRAW_FORMAT {
-        float x;
-        float y;
-        float z;
+        float x, y, z;
+        float nx, ny, nz;
+        float tx, ty, tz, tw;
+        float u, v;
+        uint16_t r, g, b, a;
     };
 
     using MainDrawVertex = VERTEX_INPUT_MAIN_DRAW_FORMAT;
 
     inline VertexInputInfo VERTEX_INPUT_INFO_MAIN_DRAW{
         .name = "vertex",
-        .vertex_size = 12,
-        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION }
+        .vertex_size = 56,
+        .attribute_infos = { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_NORMAL,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_TANGENT,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_TEX_COORD,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_COLOR }
     };
     inline InputAssemblyInfo INPUT_ASSEMBLY_INFO_MAIN_DRAW{
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
     };
 
     inline RasterizationInfo RASTERIZATION_INFO_MAIN_DRAW{
-        .polygon_mode = VK_POLYGON_MODE_LINE,
-        .cull_mode = VK_CULL_MODE_NONE,
+        .polygon_mode = VK_POLYGON_MODE_FILL,
+        .cull_mode = VK_CULL_MODE_BACK_BIT,
         .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .line_width = 1.f
     };
