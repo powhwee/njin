@@ -90,9 +90,13 @@ namespace {
         } else if (component_type ==
                    static_cast<int>(ComponentType::UnsignedShort)) {
             return ComponentType::UnsignedShort;
+        } else if (component_type ==
+                   static_cast<int>(ComponentType::UnsignedInt)) {
+            return ComponentType::UnsignedInt;
         } else if (component_type == static_cast<int>(ComponentType::Float)) {
             return ComponentType::Float;
         }
+        throw std::runtime_error("Unsupported component type");
     }
 
     template<typename ValueT>
@@ -201,9 +205,12 @@ namespace njin::gltf {
 
         for (const auto& mesh : meshes) {
             std::string mesh_name = mesh["name"].GetString();
+            printf("Loading mesh: %s\n", mesh_name.c_str());
             std::vector<core::njPrimitive> primitives{};
 
+            int primitive_index = 0;
             for (const auto& primitive : mesh["primitives"].GetArray()) {
+                printf("  Processing primitive %d\n", primitive_index++);
                 // indices
                 int indices_accessor_index{ primitive["indices"].GetInt() };
                 rj::GenericObject gltf_indices_accessor{
@@ -310,9 +317,11 @@ namespace njin::gltf {
                     vertices.emplace_back(create_info);
                 }
 
+                std::fprintf(stderr, "    Primitive has %zu vertices and %zu indices\n", vertices.size(), indices.size());
                 primitives.emplace_back(vertices, indices);
             }
 
+            std::fprintf(stderr, "  Finished loading mesh '%s' with %zu primitives\n", mesh_name.c_str(), primitives.size());
             meshes_.emplace_back(mesh_name, primitives);
         }
     }

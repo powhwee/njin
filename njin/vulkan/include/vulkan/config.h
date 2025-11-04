@@ -370,12 +370,12 @@ namespace njin::vulkan {
     inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
         .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
-        .max_vertex_count = 1000
+        .max_vertex_count = 100000
     };
 
     inline IndexBufferInfo INDEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
-        .max_index_count = 3000
+        .max_index_count = 300000
     };
 
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{
