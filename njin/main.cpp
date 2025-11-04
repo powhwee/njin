@@ -110,7 +110,7 @@ int main() {
         .transform = ecs::njTransformComponent::make(10.f, -8.f, 10.f),
         .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
-                    .look_at = { 0.f, 0.f, 0.f },
+                    .look_at = { 0.f, 5.f, 0.f },
                     .aspect = { 16.f / 9.f },
                     .settings = camera_settings }
     };
@@ -149,12 +149,12 @@ int main() {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
         float angle = time * 2.0f;
-        float radius = 14.0f;
+        float radius = 20.0f;  // Increased from 14.0f
         float new_x = radius * cos(angle);
         float new_z = radius * sin(angle);
 
         camera_transform_component->transform[0][3] = new_x;
-        camera_transform_component->transform[1][3] = 8.0f;
+        camera_transform_component->transform[1][3] = 0.f;
         camera_transform_component->transform[2][3] = new_z;
 
         engine.update();

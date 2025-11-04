@@ -207,15 +207,8 @@ namespace njin::vulkan {
                 std::string mesh_prefix = data.mesh_name + "-";
 
                 auto all_meshes_map = mesh_registry.get_map();
-                std::fprintf(stderr, "Looking for meshes with prefix '%s'\n", mesh_prefix.c_str());
-                std::fprintf(stderr, "Available mesh keys in registry:\n");
-                for (const auto& [k, _] : all_meshes_map) {
-                    std::fprintf(stderr, "  %s\n", k.c_str());
-                }
-
                 for (const auto& [key, mesh_ptr] : all_meshes_map) {
                     if (key.rfind(mesh_prefix, 0) == 0) {
-                        std::fprintf(stderr, "Found matching mesh: %s\n", key.c_str());
                         const core::njMesh* mesh = mesh_ptr;
 
                         for (const core::njPrimitive& primitive : mesh->get_primitives()) {

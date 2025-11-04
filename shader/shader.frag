@@ -4,12 +4,25 @@
 
 layout (location = 0) in vec4 frag_color;
 layout (location = 1) in vec3 frag_normal;
-layout (location = 2) in vec3 view_dir;
+layout (location = 2) in vec3 frag_tangent;
+layout (location = 3) in vec3 frag_bitangent;
+layout (location = 4) in vec3 view_dir;
 
 layout (location = 0) out vec4 out_color;
 
 void main() {
-    vec3 normal = normalize(frag_normal);
+    vec3 N = normalize(frag_normal);
+    vec3 T = normalize(frag_tangent);
+    vec3 B = normalize(frag_bitangent);
+    
+    // Construct TBN matrix
+    mat3 TBN = mat3(T, B, N);
+
+    // Visualization mode - show tangent space
+    // Red = Tangent, Green = Bitangent, Blue = Normal
+    vec3 debug_color = abs(N); // Try commenting this line and uncommenting one below to see different vectors
+    // vec3 debug_color = abs(T);
+    // vec3 debug_color = abs(B);
 
     // Light sources
     vec3 light_dirs[3];
@@ -27,19 +40,19 @@ void main() {
 
     for (int i = 0; i < 3; i++) {
         // Diffuse
-        float diff = max(dot(normal, light_dirs[i]), 0.0);
+        float diff = max(dot(N, light_dirs[i]), 0.0);
         total_diffuse += diff * light_colors[i];
 
         // Specular
         float specular_strength = 1.0;
-        vec3 reflect_dir = reflect(-light_dirs[i], normal);
+        vec3 reflect_dir = reflect(-light_dirs[i], N);
         float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 64);
         total_specular += specular_strength * spec * light_colors[i];
     }
 
     // Rim lighting
     float rim_power = 4.0;
-    float rim_amount = 1.0 - dot(view_dir, normal);
+    float rim_amount = 1.0 - dot(view_dir, N);
     float rim = pow(rim_amount, rim_power);
     rim = clamp(rim, 0.0, 1.0);
     vec3 rim_color = vec3(1.0, 1.0, 1.0) * rim;
@@ -48,7 +61,7 @@ void main() {
     float ambient_strength = 0.1;
     vec3 ambient = ambient_strength * vec3(1.0);
 
-    vec3 result = (ambient + total_diffuse + total_specular + rim_color) * frag_color.rgb;
+    vec3 result = (ambient + total_diffuse + total_specular + rim_color) * debug_color;
 
     // Exposure control
     float exposure = 0.3;
