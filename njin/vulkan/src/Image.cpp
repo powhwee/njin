@@ -145,6 +145,13 @@ namespace njin::vulkan {
             dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
             src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
             dst_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        } else if (current_layout_ == VK_IMAGE_LAYOUT_UNDEFINED &&
+                   new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            // Direct transition for dummy images (no transfer stage needed)
+            src_access_mask = 0;
+            dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
+            src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            dst_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         } else {
             throw std::invalid_argument("unsupported layout transition");
         }

@@ -20,6 +20,7 @@ namespace njin::vulkan {
      */
     struct MeshRenderInfo {
         uint32_t model_index;   // index of model matrix
+        int32_t texture_index;  // index into texture array, -1 if no texture
         uint32_t vertex_offset;  // start vertex index of mesh
         uint32_t first_index;
         uint32_t index_count;  // number of indices in mesh
@@ -41,7 +42,6 @@ namespace njin::vulkan {
 
         // index of model matrix for the mesh this billboard is representing
         uint32_t model_index;
-        uint32_t texture_index;  // sprite index
     };
 
     /**

@@ -101,6 +101,7 @@ namespace njin::ecs {
                          { 0, 0, 1 / (n - f), n / (n - f) },
                          { 0, 0, 0, 1 } };
             }
+            return math::njMat4f::Identity(); // Fallback for return warning
         }
 
         /**
@@ -115,6 +116,7 @@ namespace njin::ecs {
                                EntityId id) {
             // NOTE: this traverses the entire hierarchy for each entity
             // possible future improvement would be to do some caching
+            return math::njMat4f::Identity(); // Placeholder return
         }
 
         /**
@@ -162,9 +164,15 @@ namespace njin::ecs {
         }
     }  // namespace
 
-    njRenderSystem::njRenderSystem(core::RenderBuffer& buffer) :
+    njRenderSystem::njRenderSystem(core::RenderBuffer& buffer,
+                               const core::njRegistry<core::njMesh>& mesh_registry,
+                               const core::njRegistry<core::njMaterial>& material_registry,
+                               const core::njRegistry<core::njTexture>& texture_registry) :
         njSystem{ TickGroup::Four },
-        buffer_{ &buffer } {}
+        buffer_{ &buffer },
+        mesh_registry_{ &mesh_registry },
+        material_registry_{ &material_registry },
+        texture_registry_{ &texture_registry } {}
 
     void njRenderSystem::update(const ecs::njEntityManager& entity_manager) {
         // camera
@@ -191,7 +199,7 @@ namespace njin::ecs {
         // make the renderables and write into render buffer
         std::vector<core::Renderable> renderables{};
         auto meshes_with_parents{
-            entity_manager.get_views<njMeshComponent, njTransformComponent>()
+            entity_manager.get_views<njMeshComponent, njTransformComponent, core::njMesh>()
         };
 
         // meshes with no parent entity
@@ -201,17 +209,40 @@ namespace njin::ecs {
                        Exclude<njParentComponent>>()
         };
         for (const auto& [entity, view] : meshes_no_parents) {
-            auto mesh{ std::get<njMeshComponent*>(view) };
+            auto mesh_component{ std::get<njMeshComponent*>(view) };
             auto transform{ std::get<njTransformComponent*>(view) };
-            // global transform = local transform for entities with no parent
-            core::MeshData data{
-                .global_transform = transform->transform,
-                .mesh_name = mesh->mesh,
-                .texture_name = mesh->texture,
-            };
-            core::Renderable renderable{ .type = RenderType::Mesh,
-                                         .data = data };
-            renderables.push_back(renderable);
+            
+            const auto* mesh_data = mesh_registry_->get(mesh_component->mesh);
+            if (!mesh_data) {
+                std::cout << "[RenderSystem] Could not find mesh: " << mesh_component->mesh << std::endl;
+                continue;
+            } else {
+                 // std::cout << "[RenderSystem] Rendering mesh: " << mesh_component->mesh << " with " << mesh_data->get_primitives().size() << " primitives" << std::endl;
+            }
+
+            for (const auto& primitive : mesh_data->get_primitives()) {
+                std::string texture_name = mesh_component->texture_override;
+
+                if (texture_name.empty()) {
+                    std::string material_name = primitive.get_material_name();
+                    
+                    if (!material_name.empty()) {
+                        const auto* material = material_registry_->get(material_name);
+                        
+                        if (material && !material->base_color_texture_name.empty()) {
+                            texture_name = material->base_color_texture_name;
+                        }
+                    }
+                }
+
+                core::MeshData data{
+                    .global_transform = transform->transform,
+                    .mesh_name = mesh_component->mesh,
+                    .texture_name = texture_name,
+                };
+                core::Renderable renderable{ .type = RenderType::Mesh, .data = data };
+                renderables.push_back(renderable);
+            }
         }
 
         buffer_->replace(renderables);

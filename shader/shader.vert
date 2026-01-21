@@ -6,6 +6,8 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec4 tangent;
+layout (location = 3) in vec2 tex_coord;
+layout (location = 4) in vec4 color;
 
 // outputs
 layout (location = 0) out vec4 frag_color;
@@ -13,6 +15,7 @@ layout (location = 1) out vec3 frag_normal;
 layout (location = 2) out vec3 frag_tangent;
 layout (location = 3) out vec3 frag_bitangent;
 layout (location = 4) out vec3 view_dir;
+layout (location = 5) out vec2 frag_tex_coord;
 
 // model matrix
 layout (set = 0, binding = 0) readonly buffer Model {
@@ -26,9 +29,10 @@ layout (set = 0, binding = 1) uniform VP {
 } vp;
 
 // push constants
-layout (push_constant) uniform ModelIndex {
-    int i;
-} index;
+layout (push_constant) uniform PushConstants {
+    int model_index;
+    int texture_index;  // unused in vertex shader but must match layout
+} pc;
 
 
 vec3 srgb_to_linear(vec3 srgb_color) {
@@ -37,7 +41,7 @@ vec3 srgb_to_linear(vec3 srgb_color) {
 
 
 void main() {
-    mat4 model = models[index.i].model;
+    mat4 model = models[pc.model_index].model;
     mat4 model_view = transpose(vp.view) * transpose(model);
     gl_Position = transpose(vp.projection) * model_view * vec4(position, 1.0);
 
@@ -59,5 +63,6 @@ void main() {
 
     frag_tangent = world_tangent;
     frag_bitangent = world_bitangent;
-    frag_color = vec4(0.8, 0.8, 0.8, 1.0);
+    frag_color = color;  // Pass actual vertex colors from glTF
+    frag_tex_coord = tex_coord;
 }

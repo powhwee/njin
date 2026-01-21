@@ -153,7 +153,9 @@ namespace njin::vulkan {
     vulkan::RenderResources& render_resources,
     const core::RenderBuffer& render_buffer) :
         render_buffer_{ &render_buffer } {
+        // Process textures first to populate texture_indices_
         process_textures(render_resources, texture_registry);
+        
         write_data(mesh_registry,
                    texture_registry,
                    render_resources,
@@ -204,73 +206,80 @@ namespace njin::vulkan {
                 iso_draw_info.type = RenderType::Billboard;
                 
                 auto data{ std::get<core::MeshData>(renderable.data) };
-                std::string mesh_prefix = data.mesh_name + "-";
-
-                auto all_meshes_map = mesh_registry.get_map();
-                for (const auto& [key, mesh_ptr] : all_meshes_map) {
-                    if (key.rfind(mesh_prefix, 0) == 0) {
-                        const core::njMesh* mesh = mesh_ptr;
-
-                        for (const core::njPrimitive& primitive : mesh->get_primitives()) {
-                            for (const core::njVertex& vertex : primitive.get_vertices()) {
-                                vulkan::MainDrawVertex main_draw_vertex{
-                                    .x = vertex.position.x,
-                                    .y = vertex.position.y,
-                                    .z = vertex.position.z,
-                                    .nx = vertex.normal.x,
-                                    .ny = vertex.normal.y,
-                                    .nz = vertex.normal.z,
-                                    .tx = vertex.tangent.x,
-                                    .ty = vertex.tangent.y,
-                                    .tz = vertex.tangent.z,
-                                    .tw = vertex.tangent.w,
-                                    .u = vertex.tex_coord.x,
-                                    .v = vertex.tex_coord.y,
-                                    .r = vertex.color.x,
-                                    .g = vertex.color.y,
-                                    .b = vertex.color.z,
-                                    .a = vertex.color.w
-                                };
-                                main_vertices.push_back(main_draw_vertex);
-                            }
-
-                            for (uint32_t index : primitive.get_indices()) {
-                                main_indices.push_back(index + current_vertex_offset);
-                            }
-
-                            MeshRenderInfo mesh_info{
-                                .model_index = current_model_index,
-                                .vertex_offset = 0, 
-                                .first_index = current_index_offset,
-                                .index_count = static_cast<uint32_t>(primitive.get_indices().size())
-                            };
-                            main_draw_info.info = mesh_info;
-                            render_infos_.add(main_draw_info);
-
-                            current_vertex_offset += primitive.get_vertices().size();
-                            current_index_offset += primitive.get_indices().size();
-                        }
-
-                        std::array<IsoDrawVertex, 6> quad_vertices{
-                            calculate_billboard(mesh->get_vertices(), view_matrix)
-                        };
-                        iso_vertices.insert(iso_vertices.end(),
-                                            quad_vertices.begin(),
-                                            quad_vertices.end());
-
-                        if (!data.texture_name.empty()) {
-                            BillboardRenderInfo billboard_info{
-                                .billboard_offset = current_billboard_offset,
-                                .model_index = current_model_index,
-                                .texture_index = texture_indices_.at(data.texture_name)
-                            };
-                            iso_draw_info.info = billboard_info;
-                            render_infos_.add(iso_draw_info);
-                        }
-
-                        current_billboard_offset += 6;
-                    }
+                const core::njMesh* mesh = mesh_registry.get(data.mesh_name);
+                
+                if (!mesh) {
+                    continue;  // Skip if mesh not found
                 }
+
+                for (const core::njPrimitive& primitive : mesh->get_primitives()) {
+                    for (const core::njVertex& vertex : primitive.get_vertices()) {
+                        vulkan::MainDrawVertex main_draw_vertex{
+                            .x = vertex.position.x,
+                            .y = vertex.position.y,
+                            .z = vertex.position.z,
+                            .nx = vertex.normal.x,
+                            .ny = vertex.normal.y,
+                            .nz = vertex.normal.z,
+                            .tx = vertex.tangent.x,
+                            .ty = vertex.tangent.y,
+                            .tz = vertex.tangent.z,
+                            .tw = vertex.tangent.w,
+                            .u = vertex.tex_coord.x,
+                            .v = vertex.tex_coord.y,
+                            .r = vertex.color.x,
+                            .g = vertex.color.y,
+                            .b = vertex.color.z,
+                            .a = vertex.color.w
+                        };
+                        main_vertices.push_back(main_draw_vertex);
+                    }
+
+                    for (uint32_t index : primitive.get_indices()) {
+                        main_indices.push_back(index + current_vertex_offset);
+                    }
+
+                    // Look up texture index (-1 if no texture)
+                    int32_t tex_idx = -1;
+                    if (!data.texture_name.empty()) {
+                        auto it = texture_indices_.find(data.texture_name);
+                        if (it != texture_indices_.end()) {
+                            tex_idx = static_cast<int32_t>(it->second);
+                        }
+                    }
+                    
+                    MeshRenderInfo mesh_info{
+                        .model_index = current_model_index,
+                        .texture_index = tex_idx,
+                        .vertex_offset = 0, 
+                        .first_index = current_index_offset,
+                        .index_count = static_cast<uint32_t>(primitive.get_indices().size())
+                    };
+                    main_draw_info.info = mesh_info;
+                    render_infos_.add(main_draw_info);
+
+                    current_vertex_offset += primitive.get_vertices().size();
+                    current_index_offset += primitive.get_indices().size();
+                }
+
+                std::array<IsoDrawVertex, 6> quad_vertices{
+                    calculate_billboard(mesh->get_vertices(), view_matrix)
+                };
+                iso_vertices.insert(iso_vertices.end(),
+                                    quad_vertices.begin(),
+                                    quad_vertices.end());
+
+                if (!data.texture_name.empty()) {
+                    BillboardRenderInfo billboard_info{
+                        .billboard_offset = current_billboard_offset,
+                        .model_index = current_model_index
+                    };
+                    iso_draw_info.info = billboard_info;
+                    render_infos_.add(iso_draw_info);
+                }
+
+                current_billboard_offset += 6;
+
 
                 vulkan::MainDrawModel main_draw_model{
                     .model = data.global_transform
@@ -290,9 +299,7 @@ namespace njin::vulkan {
                                                              main_vertices);
             render_resources.index_buffers.load_into_buffer("main_draw",
                                                              main_indices);
-
-            render_resources.vertex_buffers.load_into_buffer("iso_draw",
-                                                             iso_vertices);
+            // Note: iso_draw vertex buffer removed - using only 3D rendering
         }
     }
 

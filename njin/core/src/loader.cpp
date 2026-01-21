@@ -11,23 +11,34 @@
 namespace rj = rapidjson;
 
 namespace njin::core {
-    void load_meshes(const std::string& path,
-                     njRegistry<njMesh>& mesh_registry) {
+    void load_meshes(const std::string& path, njRegistry<njMesh>& mesh_registry, njRegistry<njMaterial>& material_registry, njRegistry<njTexture>& texture_registry) {
         // Check that the schema for the config is a valid json
         rj::Document document{
             njin::util::make_validated_document("schema/meshes.schema.json",
                                                 path)
         };
 
-        rj::GenericArray meshes{ document["meshes"].GetArray() };
-        for (const auto& gltf_mesh : meshes) {
-            std::string name{ gltf_mesh["name"].GetString() };
-            std::string mesh_path{ gltf_mesh["path"].GetString() };
-            njin::gltf::GLTFAsset asset{ mesh_path };
+        rj::GenericArray meshes_to_load{ document["meshes"].GetArray() };
+        for (const auto& gltf_mesh_info : meshes_to_load) {
+            std::string name{ gltf_mesh_info["name"].GetString() };
+            std::string mesh_path{ gltf_mesh_info["path"].GetString() };
+            njin::gltf::GLTFAsset asset{ mesh_path, name };
 
             for (auto& mesh : asset.get_meshes()) {
                 std::string registry_key = name + "-" + mesh.name;
+                std::cout << "Registered mesh: " << registry_key << std::endl;
                 mesh_registry.add(registry_key, mesh);
+            }
+
+            // Materials and textures are already prefixed with alias by GLTFAsset
+            for (const auto& material : asset.get_materials()) {
+                std::cout << "Registered material: " << material.name << std::endl;
+                material_registry.add(material.name, material);
+            }
+
+            for (const auto& texture : asset.get_textures()) {
+                std::cout << "Registered texture: " << texture.name << std::endl;
+                texture_registry.add(texture.name, texture);
             }
         }
     }

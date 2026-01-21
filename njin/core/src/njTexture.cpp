@@ -7,6 +7,7 @@ namespace njin::core {
         width_{ data.width },
         height_{ data.height },
         channels_{ data.channels },
+        name{ data.name },
         size_{ [data] {
             return static_cast<int>(data.width * data.height *
                                     sizeof(unsigned int));

@@ -15,10 +15,14 @@ namespace njin::vulkan {
                        RenderResources& resources) :
         device_{ &logical_device },
         swapchain_{ &swapchain },
-        image_available_semaphore_{ *device_ },
-        render_finished_semaphore_{ *device_ },
-        in_flight_fence_{ *device_ },
         resources_{ &resources } {
+        // Create synchronization objects for each frame in flight
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+            image_available_semaphores_.push_back(std::make_unique<Semaphore>(*device_));
+            render_finished_semaphores_.push_back(std::make_unique<Semaphore>(*device_));
+            in_flight_fences_.push_back(std::make_unique<Fence>(*device_));
+        }
+        
         // create the subpass modules for each subpass in each render pass
         for (const RenderPassInfo& render_pass_info : info.render_passes) {
             render_passes_.push_back(render_pass_info.name);
@@ -67,14 +71,16 @@ namespace njin::vulkan {
     }
 
     void Renderer::draw_frame(RenderInfos& render_infos) {
+        // Wait for the fence of the current frame
         vkWaitForFences(device_->get(),
                         1,
-                        in_flight_fence_.get_handle_address(),
+                        in_flight_fences_[current_frame_]->get_handle_address(),
                         VK_TRUE,
                         UINT64_MAX);
-        vkResetFences(device_->get(), 1, in_flight_fence_.get_handle_address());
+        vkResetFences(device_->get(), 1, in_flight_fences_[current_frame_]->get_handle_address());
 
-        resources_->command_pool_.free_buffers();
+        // Note: We don't call free_buffers() here because with multiple frames in flight,
+        // command buffers from other frames may still be executing.
         // get the index of the next image that will be available
         // NOTE: this does not mean the image can be written to
         // see https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#vkAcquireNextImageKHR
@@ -84,7 +90,7 @@ namespace njin::vulkan {
         vkAcquireNextImageKHR(device_->get(),
                               swapchain_->get(),
                               UINT64_MAX,
-                              image_available_semaphore_.get(),
+                              image_available_semaphores_[current_frame_]->get(),
                               VK_NULL_HANDLE,
                               &image_index);
         CommandBuffer command_buffer{
@@ -100,15 +106,15 @@ namespace njin::vulkan {
                             render_infos);
         }
         std::vector<VkSemaphore> wait_semaphores{
-            image_available_semaphore_.get()
+            image_available_semaphores_[current_frame_]->get()
         };
         std::vector<VkPipelineStageFlags> wait_stages{
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
         };
         std::vector<VkSemaphore> signal_semaphores{
-            render_finished_semaphore_.get()
+            render_finished_semaphores_[current_frame_]->get()
         };
-        VkFence signal_fence{ in_flight_fence_.get() };
+        VkFence signal_fence{ in_flight_fences_[current_frame_]->get() };
         command_buffer.end();
         CommandBufferSubmitInfo submit_info{
             .wait_semaphores = wait_semaphores,
@@ -123,7 +129,7 @@ namespace njin::vulkan {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .pNext = nullptr,
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = render_finished_semaphore_.get_handle_address(),
+            .pWaitSemaphores = render_finished_semaphores_[current_frame_]->get_handle_address(),
             .swapchainCount = 1,
             .pSwapchains = swapchain_->get_handle_address(),
             .pImageIndices = &image_index,
@@ -131,6 +137,9 @@ namespace njin::vulkan {
         };
 
         vkQueuePresentKHR(device_->get_present_queue(), &present_info);
+        
+        // Advance to the next frame
+        current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     Renderer::~Renderer() {

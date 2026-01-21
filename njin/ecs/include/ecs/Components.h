@@ -24,8 +24,9 @@ namespace njin::ecs {
      */
     struct njTransformComponent {
         static njTransformComponent make(float x, float y, float z) {
-            return { .transform = { math::njMat4Type::Translation,
-                                    { x, y, z } } };
+            // Use the Translation constructor for proper initialization
+            math::njMat4f mat{ math::njMat4Type::Translation, math::njVec3f{x, y, z} };
+            return { .transform = mat };
         }
 
         // the global transform of an entity =
@@ -49,8 +50,8 @@ namespace njin::ecs {
      * Mesh data
      */
     struct njMeshComponent {
-        std::string mesh;     // name of mesh
-        std::string texture;  // name of texture
+        std::string mesh;               // name of mesh
+        std::string texture_override;   // name of texture to override the default one
     };
 
     /**

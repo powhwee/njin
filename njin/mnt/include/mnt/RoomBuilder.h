@@ -4,6 +4,7 @@
 #include "ecs/Components.h"
 #include "ecs/njObjectArchetype.h"
 #include "math/njVec3.h"
+#include "core/njRegistry.h"
 
 namespace mnt {
     class RoomBuilder {
@@ -14,11 +15,11 @@ namespace mnt {
          * Constructor
          * @param size Width of room
          * @param coordinate Coordinate of bottom-left of room
-         * @param mesh Mesh to use for the room tiles
+         * @param mesh_registry Registry containing meshes
          */
         RoomBuilder(RoomSize size,
                     Coordinate coordinate,
-                    njin::core::njMesh& mesh);
+                    const njin::core::njRegistry<njin::core::njMesh>& mesh_registry);
 
         /**
          * Build the room
@@ -29,7 +30,7 @@ namespace mnt {
         private:
         RoomSize size_{};
         Coordinate coordinate_{};
-        njin::core::njMesh* mesh_{};
+        const njin::core::njRegistry<njin::core::njMesh>* mesh_registry_{};
     };
 
 }  // namespace mnt

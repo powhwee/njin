@@ -11,6 +11,8 @@ namespace njin::core {
         void add(const std::string& name, const T& item);
         T* get(const std::string& name);
         const T* get(const std::string& name) const;
+        const T& get(uint32_t index) const;
+
         /**
          * Retrieve a list of all records in the registry
          * @return List of items
@@ -27,6 +29,7 @@ namespace njin::core {
         int get_record_count() const;
         private:
         std::map<std::string, T> registry_{};
+        std::vector<T*> indexed_registry_{};
     };
 }  // namespace njin::core
 

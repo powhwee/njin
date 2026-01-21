@@ -68,12 +68,18 @@ namespace njin::vulkan {
             if (render_info.type == RenderType::Mesh) {
                 auto info{ std::get<MeshRenderInfo>(render_info.info) };
 
+                // Push both model index and texture index
+                struct PushConstants {
+                    int32_t model_index;
+                    int32_t texture_index;
+                } pc{ static_cast<int32_t>(info.model_index), info.texture_index };
+                
                 vkCmdPushConstants(command_buffer.get(),
                                    bind_set_.layout,
-                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                                    0,
-                                   4,
-                                   &info.model_index);
+                                   sizeof(PushConstants),
+                                   &pc);
                 vkCmdDrawIndexed(command_buffer.get(),
                                  info.index_count,
                                  1,
@@ -88,12 +94,6 @@ namespace njin::vulkan {
                                    0,
                                    4,
                                    &info.model_index);
-                vkCmdPushConstants(command_buffer.get(),
-                                   bind_set_.layout,
-                                   VK_SHADER_STAGE_FRAGMENT_BIT,
-                                   4,
-                                   4,
-                                   &info.texture_index);
                 vkCmdDraw(command_buffer.get(), 6, 1, info.billboard_offset, 0);
             }
         }

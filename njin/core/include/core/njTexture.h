@@ -19,6 +19,7 @@ namespace njin::core {
         int width;
         int height;
         TextureChannels channels;
+        std::string name;
     };
 
     class njTexture {
@@ -31,6 +32,8 @@ namespace njin::core {
         int get_size() const;
 
         uint64_t get_size_uint64() const;
+        
+        std::string name;
 
         private:
         ImageData data_;

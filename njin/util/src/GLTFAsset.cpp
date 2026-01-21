@@ -9,8 +9,11 @@
 #include <vulkan/vulkan_core.h>
 
 #include "core/njVertex.h"
+#include "core/njMaterial.h"
+#include "core/njTexture.h"
 #include "math/njVec3.h"
 #include "util/Accessor.h"
+#include "util/stb.h" // For stb_image functions
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #include <windows.h>
@@ -27,6 +30,24 @@ namespace {
     namespace gltf = njin::gltf;
     namespace math = njin::math;
     namespace core = njin::core;
+
+    // Helper function to extract raw image data from the glTF binary buffer
+    // Helper function to extract raw image data from the glTF binary buffer
+    std::vector<unsigned char> get_image_data(const gltf::Buffer& buffer,
+                                              const std::vector<gltf::BufferView>& buffer_views,
+                                              const rj::Value& image_val) {
+        auto image_obj = image_val.GetObject();
+        if (image_obj.HasMember("bufferView")) {
+            int buffer_view_index = image_obj["bufferView"].GetInt();
+            const gltf::BufferView& buffer_view = buffer_views[buffer_view_index];
+            std::vector<std::byte> raw_data = buffer_view.get();
+            std::vector<unsigned char> result(raw_data.size());
+            std::memcpy(result.data(), raw_data.data(), raw_data.size());
+            return result;
+        }
+        // Handle URI for external images if needed in the future
+        throw std::runtime_error("External image URIs not yet supported. Image must be embedded via bufferView.");
+    }
 
     std::vector<gltf::BufferView>
     process_buffer_views(const gltf::Buffer& buffer,
@@ -57,6 +78,29 @@ namespace {
 
         return result;
     };
+
+    // Helper function to load image pixels using stb_image and create an njTexture
+    // Helper function to load image pixels using stb_image and create an njTexture
+    core::njTexture load_image_pixels(const std::vector<unsigned char>& image_data, const std::string& name) {
+        int width, height, channels;
+        unsigned char* pixels = stbi_load_from_memory(image_data.data(), static_cast<int>(image_data.size()), &width, &height, &channels, STBI_rgb_alpha);
+
+        if (!pixels) {
+            throw std::runtime_error(std::format("Failed to load image pixels for texture '{}'", name));
+        }
+
+        core::njTextureCreateInfo info{};
+        info.width = width;
+        info.height = height;
+        info.channels = core::TextureChannels::RGBA; // Force to 4 channels (RGBA)
+        info.data.assign(pixels, pixels + (width * height * 4));
+        info.name = name;
+
+        core::njTexture texture{info};
+
+        stbi_image_free(pixels);
+        return texture;
+    }
 
     gltf::Type get_type(const std::string& type) {
         using Type = gltf::Type;
@@ -99,53 +143,258 @@ namespace {
         throw std::runtime_error("Unsupported component type");
     }
 
-    template<typename ValueT>
-    gltf::Accessor::AccessorCreateInfo
-    make_accessor_create_info(const std::vector<gltf::BufferView>& buffer_views,
-                              const rj::GenericObject<false, ValueT>&
-                              accessor) {
-        int buffer_view_index{ accessor["bufferView"].GetInt() };
+            template<typename ValueT>
 
-        // component type
-        int gltf_component_type{ accessor["componentType"].GetInt() };
-        gltf::ComponentType component_type{
-            get_component_type(gltf_component_type)
-        };
+            gltf::Accessor::AccessorCreateInfo
 
-        // type
-        std::string gltf_type{ accessor["type"].GetString() };
-        gltf::Type type{ get_type(gltf_type) };
+            make_accessor_create_info(const std::vector<gltf::BufferView>& buffer_views,
 
-        // buffer view
-        gltf::BufferView buffer_view{ buffer_views[buffer_view_index] };
+                                      const rj::GenericObject<false, ValueT>&
 
-        // byte offset
-        uint32_t byte_offset{ 0 };
-        if (accessor.HasMember("byteOffset")) {  // no member = default 0
-            byte_offset = accessor["byteOffset"].GetInt();
-        }
+                                      accessor) {
 
-        // count
-        uint32_t count{ static_cast<uint32_t>(accessor["count"].GetInt()) };
+                int buffer_view_index{ accessor["bufferView"].GetInt() };
 
-        gltf::Accessor::AccessorCreateInfo info{
-            .type = type,
-            .component_type = component_type,
-            .buffer_view = buffer_view,
-            .byte_offset = byte_offset,
-            .count = count
-        };
+        
 
-        return info;
-    }
+                // component type
 
-}  // namespace
+                int gltf_component_type{ accessor["componentType"].GetInt() };
 
-namespace njin::gltf {
+                gltf::ComponentType component_type{
 
-    GLTFAsset::GLTFAsset(const std::string& path) {
-        std::ifstream file{ path, std::ios::in | std::ios::binary };
-        if (!file.is_open()) {
+                    get_component_type(gltf_component_type)
+
+                };
+
+        
+
+                // type
+
+                std::string gltf_type{ accessor["type"].GetString() };
+
+                gltf::Type type{ get_type(gltf_type) };
+
+        
+
+                // buffer view
+
+                gltf::BufferView buffer_view{ buffer_views[buffer_view_index] };
+
+        
+
+                // byte offset
+
+                uint32_t byte_offset{ 0 };
+
+                if (accessor.HasMember("byteOffset")) {  // no member = default 0
+
+                    byte_offset = accessor["byteOffset"].GetInt() ;
+
+                }
+
+        
+
+                // count
+
+                uint32_t count{ static_cast<uint32_t>(accessor["count"].GetInt()) };
+
+        
+
+                gltf::Accessor::AccessorCreateInfo info{
+
+                    .type = type,
+
+                    .component_type = component_type,
+
+                    .buffer_view = buffer_view,
+
+                    .byte_offset = byte_offset,
+
+                    .count = count
+
+                };
+
+        
+
+                return info;
+
+            }
+
+        
+
+            std::vector<core::njTexture>
+
+            process_images(const gltf::Buffer& buffer,
+
+                           const std::vector<gltf::BufferView>& buffer_views,
+
+                           const rj::Document& document) {
+
+                std::vector<core::njTexture> result{};
+
+                if (!document.HasMember("images")) {
+
+                    return result;
+
+                }
+
+        
+
+                rj::GenericArray images{ document["images"].GetArray() };
+
+                for (auto it{ images.begin() }; it != images.end(); ++it) {
+
+                    rj::GenericObject image_obj{ it->GetObject() };
+
+                    // Name from glTF or generated
+
+                    std::string name = image_obj.HasMember("name") ? image_obj["name"].GetString() : std::format("image_{}", result.size());
+
+                    std::vector<unsigned char> image_data = get_image_data(buffer, buffer_views, *it);
+
+                    result.emplace_back(load_image_pixels(image_data, name));
+
+                }
+
+                return result;
+
+            }
+
+        
+
+            std::vector<core::njTexture>
+
+            process_textures(const std::vector<core::njTexture>& images, // These are the raw images, after processing
+
+                             const rj::Document& document) {
+
+                std::vector<core::njTexture> result{};
+
+                if (!document.HasMember("textures")) {
+
+                    return result;
+
+                }
+
+        
+
+                rj::GenericArray textures{ document["textures"].GetArray() };
+
+                for (auto it{ textures.begin() }; it != textures.end(); ++it) {
+
+                    rj::GenericObject texture_obj{ it->GetObject() };
+
+                    int source_image_index = texture_obj["source"].GetInt();
+
+                    // For now, we directly use the image as the texture. Samplers are ignored.
+
+                    result.emplace_back(images[source_image_index]);
+
+                    result.back().name = texture_obj.HasMember("name") ? texture_obj["name"].GetString() : std::format("texture_{}", result.size());
+
+                }
+
+                return result;
+
+            }
+
+        
+
+            // Temporary struct to hold material info with texture index before resolving to name
+            struct TempMaterial {
+                core::njMaterial material;
+                int base_color_texture_index{ -1 };
+            };
+
+            std::vector<TempMaterial>
+
+            process_materials(const std::vector<core::njTexture>& textures,
+
+                              const rj::Document& document) {
+
+                std::vector<TempMaterial> result{};
+
+                if (!document.HasMember("materials")) {
+
+                    return result;
+
+                }
+
+        
+
+                rj::GenericArray materials{ document["materials"].GetArray() };
+
+                for (auto it{ materials.begin() }; it != materials.end(); ++it) {
+
+                    rj::GenericObject material_obj{ it->GetObject() };
+
+                    TempMaterial temp{};
+
+                    temp.material.name = material_obj.HasMember("name") ? material_obj["name"].GetString() : std::format("material_{}", result.size());
+
+        
+
+                    if (material_obj.HasMember("pbrMetallicRoughness")) {
+
+                        rj::GenericObject pbr = material_obj["pbrMetallicRoughness"].GetObject();
+
+                        if (pbr.HasMember("baseColorFactor")) {
+
+                            const rj::GenericArray color_array = pbr["baseColorFactor"].GetArray();
+
+                            temp.material.base_color_factor = {
+
+                                color_array[0].GetFloat(),
+
+                                color_array[1].GetFloat(),
+
+                                color_array[2].GetFloat(),
+
+                                color_array[3].GetFloat()
+
+                            };
+
+                        }
+
+                        if (pbr.HasMember("baseColorTexture")) {
+
+                            int texture_index = pbr["baseColorTexture"].GetObject()["index"].GetInt();
+
+                            temp.base_color_texture_index = texture_index;
+
+                        }
+
+                    }
+
+                    result.emplace_back(temp);
+
+                }
+
+                return result;
+
+            }
+
+        
+
+        }  // namespace
+
+        
+
+        namespace njin::gltf {
+
+        
+
+            GLTFAsset::GLTFAsset(const std::string& path, const std::string& alias)
+                : alias_{ alias } {
+
+                std::ifstream file{ path, std::ios::in | std::ios::binary };
+
+                if (!file.is_open()) {
+
+        
+
+    
             throw std::runtime_error("Could not open glTF file!");
         }
 
@@ -203,6 +452,25 @@ namespace njin::gltf {
         rj::GenericArray accessors{ document["accessors"].GetArray() };
         rj::GenericArray meshes{ document["meshes"].GetArray() };
 
+        // Process images, textures, and materials
+        textures_ = process_images(buffer_, buffer_views_, document);
+        textures_ = process_textures(textures_, document); // Re-process to link images to glTF textures
+        auto temp_materials = process_materials(textures_, document);
+
+        // Prefix all texture names with alias
+        for (auto& texture : textures_) {
+            texture.name = alias_ + "-" + texture.name;
+        }
+
+        // Convert temp materials to final materials with prefixed names and resolved texture names
+        for (auto& temp : temp_materials) {
+            temp.material.name = alias_ + "-" + temp.material.name;
+            if (temp.base_color_texture_index >= 0 && temp.base_color_texture_index < static_cast<int>(textures_.size())) {
+                temp.material.base_color_texture_name = textures_[temp.base_color_texture_index].name;
+            }
+            materials_.emplace_back(temp.material);
+        }
+
         for (const auto& mesh : meshes) {
             std::string mesh_name = mesh["name"].GetString();
             printf("Loading mesh: %s\n", mesh_name.c_str());
@@ -211,6 +479,15 @@ namespace njin::gltf {
             int primitive_index = 0;
             for (const auto& primitive : mesh["primitives"].GetArray()) {
                 printf("  Processing primitive %d\n", primitive_index++);
+                // Resolve material index to prefixed material name
+                std::string material_name;
+                if (primitive.HasMember("material")) {
+                    int material_idx = primitive["material"].GetInt();
+                    if (material_idx >= 0 && material_idx < static_cast<int>(materials_.size())) {
+                        material_name = materials_[material_idx].name;  // Already prefixed
+                    }
+                }
+
                 // indices
                 int indices_accessor_index{ primitive["indices"].GetInt() };
                 rj::GenericObject gltf_indices_accessor{
@@ -318,7 +595,7 @@ namespace njin::gltf {
                 }
 
                 std::fprintf(stderr, "    Primitive has %zu vertices and %zu indices\n", vertices.size(), indices.size());
-                primitives.emplace_back(vertices, indices);
+                primitives.emplace_back(vertices, indices, material_name);
             }
 
             std::fprintf(stderr, "  Finished loading mesh '%s' with %zu primitives\n", mesh_name.c_str(), primitives.size());
@@ -328,6 +605,14 @@ namespace njin::gltf {
 
     std::vector<core::njMesh> GLTFAsset::get_meshes() const {
         return meshes_;
+    }
+
+    std::vector<core::njMaterial> GLTFAsset::get_materials() const {
+        return materials_;
+    }
+
+    std::vector<core::njTexture> GLTFAsset::get_textures() const {
+        return textures_;
     }
 
 }  // namespace njin::gltf

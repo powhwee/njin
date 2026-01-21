@@ -4,6 +4,8 @@
 
 #include "core/loader.h"
 #include "core/njMesh.h"
+#include "core/njMaterial.h"
+#include "core/njTexture.h"
 
 namespace njin::core {
 
@@ -11,7 +13,9 @@ namespace njin::core {
         SECTION("mesh registry loading") {
             SECTION("valid json") {
                 njRegistry<njMesh> registry{};
-                REQUIRE_NOTHROW(load_meshes("njRegistry/one.meshes", registry));
+                njRegistry<njMaterial> material_registry{};
+                njRegistry<njTexture> texture_registry{};
+                REQUIRE_NOTHROW(load_meshes("njRegistry/one.meshes", registry, material_registry, texture_registry));
 
                 njMesh* cube{ registry.get("cube") };
                 REQUIRE(cube != nullptr);
@@ -21,7 +25,9 @@ namespace njin::core {
             }
             SECTION("throw if .meshes json is invalid") {
                 njRegistry<njMesh> registry{};
-                REQUIRE_THROWS(load_meshes("njRegistry/two.meshes", registry));
+                njRegistry<njMaterial> material_registry{};
+                njRegistry<njTexture> texture_registry{};
+                REQUIRE_THROWS(load_meshes("njRegistry/two.meshes", registry, material_registry, texture_registry));
             }
         }
     }

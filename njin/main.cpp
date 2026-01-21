@@ -71,10 +71,9 @@ int main() {
         .attachment_images = { ATTACHMENT_IMAGE_INFO_DEPTH },
         .set_layouts = { DESCRIPTOR_SET_LAYOUT_INFO_MVP,
                          DESCRIPTOR_SET_LAYOUT_TEXTURES },
-        .render_passes = { RENDER_PASS_INFO_MAIN, RENDER_PASS_INFO_ISO },
-        .pipelines = { PIPELINE_INFO_MAIN_DRAW, PIPELINE_INFO_ISO_DRAW },
-        .vertex_buffers = { VERTEX_BUFFER_INFO_MAIN_DRAW,
-                            VERTEX_BUFFER_INFO_ISO_DRAW },
+        .render_passes = { RENDER_PASS_INFO_MAIN },  // Removed iso pass
+        .pipelines = { PIPELINE_INFO_MAIN_DRAW },    // Removed iso pipeline
+        .vertex_buffers = { VERTEX_BUFFER_INFO_MAIN_DRAW },  // Removed iso vertex buffer
         .index_buffers = { INDEX_BUFFER_INFO_MAIN_DRAW }
     };
 
@@ -88,12 +87,15 @@ int main() {
                        RENDERER_INFO,
                        resources };
 
-    // prepare meshes from .meshes file
+    // Prepare registries
     core::njRegistry<core::njMesh> mesh_registry{};
-    load_meshes("main.meshes", mesh_registry);
-
-    // prepare textures from .textures file
+    core::njRegistry<core::njMaterial> material_registry{};
     core::njRegistry<core::njTexture> texture_registry{};
+
+    // Load assets from glTF files specified in the manifest
+    load_meshes("main.meshes", mesh_registry, material_registry, texture_registry);
+
+    // Load standalone textures for overrides
     load_textures("main.textures", texture_registry);
 
     // initialize engine and add all the systems we want
@@ -102,15 +104,15 @@ int main() {
     engine.add_system(std::make_unique<ecs::njInputSystem>(should_run));
     engine.add_system(std::make_unique<ecs::njMovementSystem>());
     core::RenderBuffer render_buffer{};
-    engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer));
+    engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer, mesh_registry, material_registry, texture_registry));
 
-    ecs::PerspectiveCameraSettings camera_settings{ .near = 1.f, .far = 1000.f, .horizontal_fov = 90.f };
+    ecs::PerspectiveCameraSettings camera_settings{ .near = 0.1f, .far = 1000.f, .horizontal_fov = 90.f };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = ecs::njTransformComponent::make(10.f, -8.f, 10.f),
+        .transform = ecs::njTransformComponent::make(0.f, 2.f, 10.f),
         .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
-                    .look_at = { 0.f, 5.f, 0.f },
+                    .look_at = { 0.f, 0.f, 0.f },
                     .aspect = { 16.f / 9.f },
                     .settings = camera_settings }
     };
@@ -119,12 +121,21 @@ int main() {
     engine.add_archetype(camera_archetype);
 
     ecs::njObjectArchetypeCreateInfo object_info{
-        .name = "cube",
+        .name = "player_mesh",
         .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
-        .mesh = { .mesh = "cube", .texture = "" }
+        .mesh = { .mesh = "player-Cube.001", .texture_override = "" }
     };
-    ecs::njObjectArchetype object_archetype{ object_info };
+    ecs::njObjectArchetype object_archetype{ object_info, mesh_registry };
     engine.add_archetype(object_archetype);
+
+    // Add the second mesh (cube-Object_0) positioned to the side
+    ecs::njObjectArchetypeCreateInfo cube_info{
+        .name = "cube_mesh",
+        .transform = ecs::njTransformComponent::make(5.f, 0.f, 0.f),  // Offset to the right
+        .mesh = { .mesh = "cube-Object_0", .texture_override = "" }
+    };
+    ecs::njObjectArchetype cube_archetype{ cube_info, mesh_registry };
+    engine.add_archetype(cube_archetype);
 
     // ecs::njInputComponent input{};
 
@@ -132,7 +143,7 @@ int main() {
     //     .name = "player",
     //     .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
     //     .input = {},
-    //     .mesh = { .mesh = "player", .texture = "statue" },
+    //     .mesh = { .mesh = "player", .texture_override = "statue" },
     //     .intent = {},
     //     .physics = {}
     // };
@@ -148,13 +159,13 @@ int main() {
         auto current_time = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
-        float angle = time * 2.0f;
-        float radius = 20.0f;  // Increased from 14.0f
+        float angle = time * 0.5f;  // Slower rotation
+        float radius = 15.0f;
         float new_x = radius * cos(angle);
         float new_z = radius * sin(angle);
 
         camera_transform_component->transform[0][3] = new_x;
-        camera_transform_component->transform[1][3] = 0.f;
+        camera_transform_component->transform[1][3] = 5.f;  // Slightly above
         camera_transform_component->transform[2][3] = new_z;
 
         engine.update();

@@ -4,10 +4,10 @@ using namespace njin;
 namespace mnt {
     RoomBuilder::RoomBuilder(RoomSize size,
                              Coordinate coordinate,
-                             njin::core::njMesh& mesh) :
+                             const njin::core::njRegistry<njin::core::njMesh>& mesh_registry) :
         size_{ size },
         coordinate_{ coordinate },
-        mesh_{ &mesh } {}
+        mesh_registry_{ &mesh_registry } {}
 
     std::vector<ecs::njObjectArchetype> RoomBuilder::build() const {
         std::vector<ecs::njObjectArchetype> tiles{};
@@ -28,10 +28,10 @@ namespace mnt {
                 ecs::njObjectArchetypeCreateInfo info{
                     .name = "",
                     .transform = transform,
-                    .mesh = { .mesh = "cube", .texture = "statue" }
+                    .mesh = { .mesh = "cube", .texture_override = "statue" }
                 };
 
-                tiles.emplace_back(info);
+                tiles.emplace_back(info, *mesh_registry_);
             }
         }
 

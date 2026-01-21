@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "window.h"
+#include "Window.h"
 
 #ifdef NDEBUG
     constexpr bool enable_validation_layers = false;

@@ -123,11 +123,11 @@ namespace njin::vulkan {
      * Main drawing pipeline
      */
 
-    // 4 bytes for the integer index into the model matrix descriptor array
+    // 8 bytes for model_index (4) + texture_index (4)
     inline VkPushConstantRange PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL{
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         .offset = 0,
-        .size = 4
+        .size = 8
     };
 
     inline ShaderStageInfo SHADER_STAGE_INFO_MAIN_DRAW_VERTEX{
@@ -197,7 +197,7 @@ namespace njin::vulkan {
 
     inline RasterizationInfo RASTERIZATION_INFO_MAIN_DRAW{
         .polygon_mode = VK_POLYGON_MODE_FILL,
-        .cull_mode = VK_CULL_MODE_BACK_BIT,
+        .cull_mode = VK_CULL_MODE_NONE,
         .front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .line_width = 1.f
     };
@@ -229,7 +229,7 @@ namespace njin::vulkan {
     inline PipelineInfo PIPELINE_INFO_MAIN_DRAW{
         .render_pass = "main",
         .subpass = "draw",
-        .set_layouts = { "mvp" },
+        .set_layouts = { "mvp", "textures" },  // Added textures for fragment shader
         .push_constant_ranges = { PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL },
         .shader_stages = { SHADER_STAGE_INFO_MAIN_DRAW_VERTEX,
                            SHADER_STAGE_INFO_MAIN_DRAW_FRAGMENT },
@@ -483,6 +483,6 @@ namespace njin::vulkan {
      * Overall renderer configuration
      */
     inline RendererInfo RENDERER_INFO{
-        .render_passes = { RENDER_PASS_INFO_MAIN, RENDER_PASS_INFO_ISO }
+        .render_passes = { RENDER_PASS_INFO_MAIN }  // Removed iso pass
     };
 };  // namespace njin::vulkan

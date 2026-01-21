@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "Fence.h"
 #include "Semaphore.h"
 #include "vulkan/RenderResources.h"
@@ -7,6 +8,8 @@
 #include "vulkan/config_classes.h"
 
 namespace njin::vulkan {
+    constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+
     class Renderer {
         public:
         explicit Renderer(const LogicalDevice& logical_device,
@@ -25,9 +28,10 @@ namespace njin::vulkan {
         private:
         const LogicalDevice* device_{ nullptr };
         Swapchain* swapchain_{ nullptr };
-        Semaphore image_available_semaphore_;
-        Semaphore render_finished_semaphore_;
-        Fence in_flight_fence_;
+        std::vector<std::unique_ptr<Semaphore>> image_available_semaphores_;
+        std::vector<std::unique_ptr<Semaphore>> render_finished_semaphores_;
+        std::vector<std::unique_ptr<Fence>> in_flight_fences_;
+        uint32_t current_frame_{ 0 };
 
         void run_render_pass(CommandBuffer& command_buffer,
                              const std::string& render_pass_name,
@@ -40,3 +44,5 @@ namespace njin::vulkan {
         RenderResources* resources_{ nullptr };
     };
 }  // namespace njin::vulkan
+
+

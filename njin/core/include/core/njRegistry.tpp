@@ -12,6 +12,15 @@ namespace njin::core {
             return;
         }
         registry_.insert({ name, item });
+        indexed_registry_.push_back(&registry_.at(name));
+    }
+
+    template<typename T>
+    const T& njRegistry<T>::get(uint32_t index) const {
+        if (index >= indexed_registry_.size()) {
+             throw std::runtime_error("Index out of bounds");
+        }
+        return *indexed_registry_[index];
     }
 
     template<typename T>

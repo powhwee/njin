@@ -324,6 +324,8 @@ namespace njin::vulkan {
                         Image image{ *device_,
                                      *physical_device_,
                                      image_create_info };
+                        // Transition dummy image to correct layout
+                        image.transition_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                         ImageView image_view{ *device_,
                                               image,
                                               { .width = 1, .height = 1 },
