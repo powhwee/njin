@@ -109,10 +109,10 @@ int main() {
     ecs::PerspectiveCameraSettings camera_settings{ .near = 0.1f, .far = 1000.f, .horizontal_fov = 90.f };
     ecs::njCameraArchetypeCreateInfo camera_info{
         .name = "camera",
-        .transform = ecs::njTransformComponent::make(0.f, 2.f, 10.f),
+        .transform = ecs::njTransformComponent::make(10.f, -8.f, 10.f),
         .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
-                    .look_at = { 0.f, 0.f, 0.f },
+                    .look_at = { 0.f, 3.f, 0.f },
                     .aspect = { 16.f / 9.f },
                     .settings = camera_settings }
     };
@@ -165,7 +165,7 @@ int main() {
         float new_z = radius * sin(angle);
 
         camera_transform_component->transform[0][3] = new_x;
-        camera_transform_component->transform[1][3] = 5.f;  // Slightly above
+        camera_transform_component->transform[1][3] = 4.f;  // At rocket's mid-height
         camera_transform_component->transform[2][3] = new_z;
 
         engine.update();
