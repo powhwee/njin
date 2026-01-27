@@ -21,6 +21,10 @@ namespace njin::vulkan {
     struct MeshRenderInfo {
         uint32_t model_index;   // index of model matrix
         int32_t texture_index;  // index into texture array, -1 if no texture
+        float base_color_r;     // base color factor R
+        float base_color_g;     // base color factor G
+        float base_color_b;     // base color factor B
+        float base_color_a;     // base color factor A
         uint32_t vertex_offset;  // start vertex index of mesh
         uint32_t first_index;
         uint32_t index_count;  // number of indices in mesh

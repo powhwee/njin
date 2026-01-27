@@ -362,9 +362,14 @@ namespace {
                             int texture_index = pbr["baseColorTexture"].GetObject()["index"].GetInt();
 
                             temp.base_color_texture_index = texture_index;
+                            printf("[GLTFAsset] Found baseColorTexture index %d for material '%s'\n", texture_index, temp.material.name.c_str());
 
+                        } else {
+                            printf("[GLTFAsset] Material '%s' has pbrMetallicRoughness but NO baseColorTexture\n", temp.material.name.c_str());
                         }
 
+                    } else {
+                        printf("[GLTFAsset] Material '%s' has NO pbrMetallicRoughness\n", temp.material.name.c_str());
                     }
 
                     result.emplace_back(temp);
@@ -467,6 +472,15 @@ namespace {
             temp.material.name = alias_ + "-" + temp.material.name;
             if (temp.base_color_texture_index >= 0 && temp.base_color_texture_index < static_cast<int>(textures_.size())) {
                 temp.material.base_color_texture_name = textures_[temp.base_color_texture_index].name;
+                printf("[GLTFAsset] Material '%s' -> texture '%s' (index %d)\n", 
+                       temp.material.name.c_str(), 
+                       temp.material.base_color_texture_name.c_str(),
+                       temp.base_color_texture_index);
+            } else {
+                printf("[GLTFAsset] Material '%s' has NO texture (index %d, textures count %zu)\n", 
+                       temp.material.name.c_str(), 
+                       temp.base_color_texture_index,
+                       textures_.size());
             }
             materials_.emplace_back(temp.material);
         }

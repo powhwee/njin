@@ -11,6 +11,10 @@ namespace njin::core {
         math::njMat4f global_transform;
         std::string mesh_name;
         std::string texture_name;
+        float base_color_r{ 1.0f };  // Default to white
+        float base_color_g{ 1.0f };
+        float base_color_b{ 1.0f };
+        float base_color_a{ 1.0f };
     };
 
     struct Renderable {

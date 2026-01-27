@@ -72,7 +72,7 @@ namespace njin::vulkan {
         .name = "image",
         .binding = 0,
         .descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .descriptor_count = 16,
+        .descriptor_count = 64,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .extra_info =
         SetLayoutBindingImageInfo{
@@ -123,11 +123,11 @@ namespace njin::vulkan {
      * Main drawing pipeline
      */
 
-    // 8 bytes for model_index (4) + texture_index (4)
+    // 24 bytes for model_index (4) + texture_index (4) + base_color (16)
     inline VkPushConstantRange PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL{
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         .offset = 0,
-        .size = 8
+        .size = 24
     };
 
     inline ShaderStageInfo SHADER_STAGE_INFO_MAIN_DRAW_VERTEX{
@@ -370,12 +370,12 @@ namespace njin::vulkan {
     inline VertexBufferInfo VERTEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
         .vertex_input = VERTEX_INPUT_INFO_MAIN_DRAW,
-        .max_vertex_count = 100000
+        .max_vertex_count = 500000
     };
 
     inline IndexBufferInfo INDEX_BUFFER_INFO_MAIN_DRAW{
         .name = "main_draw",
-        .max_index_count = 300000
+        .max_index_count = 1500000
     };
 
     inline AttachmentReference ATTACHMENT_REFERENCE_MAIN_DRAW_SWAPCHAIN{

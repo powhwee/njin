@@ -103,6 +103,7 @@ int main() {
     bool should_run{ true };
     engine.add_system(std::make_unique<ecs::njInputSystem>(should_run));
     engine.add_system(std::make_unique<ecs::njMovementSystem>());
+    engine.add_system(std::make_unique<ecs::njPhysicsSystem>());
     core::RenderBuffer render_buffer{};
     engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer, mesh_registry, material_registry, texture_registry));
 
@@ -113,42 +114,54 @@ int main() {
         .camera = { .type = ecs::njCameraType::Perspective,
                     .up = { 0.f, 1.f, 0.f },
                     .look_at = { 0.f, 3.f, 0.f },
-                    .aspect = { 16.f / 9.f },
+                    .aspect = 16.f / 9.f,
                     .settings = camera_settings }
     };
 
     ecs::njCameraArchetype camera_archetype{ camera_info };
     engine.add_archetype(camera_archetype);
 
-    ecs::njObjectArchetypeCreateInfo object_info{
-        .name = "player_mesh",
-        .transform = ecs::njTransformComponent::make(0.f, 0.f, 0.f),
-        .mesh = { .mesh = "player-Cube.001", .texture_override = "" }
+
+
+    // cube (now stitch)
+    auto car_meshes = mesh_registry.get_all_mesh_names("cube");
+    for (const auto& mesh_name : car_meshes) {
+        // Create translation matrix
+        math::njMat4f translation{ math::njMat4Type::Translation, math::njVec3f{5.f, 0.f, 0.f} };
+        
+        // Create -90 degree rotation around X axis (x,y,z,w format)
+        float angle_x = -3.14159f / 2.f;
+        float half_x = angle_x / 2.f;
+        math::njVec4f quat_x{ std::sin(half_x), 0.f, 0.f, std::cos(half_x) };
+        math::njMat4f rotation_x{ quat_x };
+        
+        // No Y rotation for now - let's get upright first
+        math::njMat4f rotation_y = math::njMat4f::Identity();
+        
+        // Combine: first rotate X, then rotate Y, then translate
+        math::njMat4f final_transform = translation * rotation_y * rotation_x;
+        
+        ecs::njObjectArchetypeCreateInfo car_part_info{
+            .name = mesh_name,
+            .transform = { .transform = final_transform },
+            .mesh = { .mesh = mesh_name, .texture_override = "" }
+        };
+        ecs::njObjectArchetype car_part_archetype{ car_part_info, mesh_registry };
+        engine.add_archetype(car_part_archetype);
+    }
+
+    ecs::njInputComponent input{}; // Default constructed input
+
+    ecs::njPlayerArchetypeCreateInfo player_archetype_info{
+        .name = "player",
+        .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
+        .input = input,
+        .mesh = { .mesh = mesh_registry.get_primary_mesh_name("player"), .texture_override = "" },
+        .intent = {},
+        .physics = { .mass = 1.0f, .type = ecs::RigidBodyType::Dynamic }
     };
-    ecs::njObjectArchetype object_archetype{ object_info, mesh_registry };
-    engine.add_archetype(object_archetype);
-
-    // Add the second mesh (cube-Object_0) positioned to the side
-    ecs::njObjectArchetypeCreateInfo cube_info{
-        .name = "cube_mesh",
-        .transform = ecs::njTransformComponent::make(5.f, 0.f, 0.f),  // Offset to the right
-        .mesh = { .mesh = "cube-Object_0", .texture_override = "" }
-    };
-    ecs::njObjectArchetype cube_archetype{ cube_info, mesh_registry };
-    engine.add_archetype(cube_archetype);
-
-    // ecs::njInputComponent input{};
-
-    // ecs::njPlayerArchetypeCreateInfo player_archetype_info{
-    //     .name = "player",
-    //     .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
-    //     .input = {},
-    //     .mesh = { .mesh = "player", .texture_override = "statue" },
-    //     .intent = {},
-    //     .physics = {}
-    // };
-    // ecs::njPlayerArchetype player_archetype{ player_archetype_info };
-    // engine.add_archetype(player_archetype);
+    ecs::njPlayerArchetype player_archetype{ player_archetype_info };
+    engine.add_archetype(player_archetype);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 

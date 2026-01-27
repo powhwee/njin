@@ -14,6 +14,23 @@ namespace njin::core {
         const T& get(uint32_t index) const;
 
         /**
+         * Get the primary resource name for a given alias.
+         * Searches for the first resource that starts with "{alias}-".
+         * @param alias The alias to search for (e.g., "cube")
+         * @return The full resource name (e.g., "cube-Object_0")
+         * @throws std::runtime_error if no matching resource is found
+         */
+        std::string get_primary_mesh_name(const std::string& alias) const;
+        
+        /**
+         * Get all resource names for a given alias.
+         * Searches for all resources that start with "{alias}-".
+         * @param alias The alias to search for (e.g., "cube")
+         * @return List of full resource names
+         */
+        std::vector<std::string> get_all_mesh_names(const std::string& alias) const;
+
+        /**
          * Retrieve a list of all records in the registry
          * @return List of items
          * @note invalidated when an item is removed or added after this is called

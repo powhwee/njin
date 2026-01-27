@@ -2,11 +2,11 @@
     "meshes" : [
         {
             "name": "cube",
-            "path": "mesh/toy_rocket.glb"
+            "path": "mesh/stitch_free.glb"
         } ,
         {
             "name": "player",
-            "path": "mesh/player.glb"
+            "path": "mesh/cube.glb"
         }
     ]
 }

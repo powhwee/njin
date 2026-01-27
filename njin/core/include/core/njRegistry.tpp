@@ -24,6 +24,32 @@ namespace njin::core {
     }
 
     template<typename T>
+    std::string njRegistry<T>::get_primary_mesh_name(const std::string& alias)
+    const {
+        std::string prefix = alias + "-";
+        for (const auto& [key, _] : registry_) {
+            if (key.find(prefix) == 0) {
+                return key;
+            }
+        }
+        throw std::runtime_error(std::format(
+        "No primary mesh found for alias '{}'", alias));
+    }
+
+    template<typename T>
+    std::vector<std::string> njRegistry<T>::get_all_mesh_names(const std::string& alias)
+    const {
+        std::vector<std::string> names{};
+        std::string prefix = alias + "-";
+        for (const auto& [key, _] : registry_) {
+            if (key.find(prefix) == 0) {
+                names.push_back(key);
+            }
+        }
+        return names;
+    }
+
+    template<typename T>
     T* njRegistry<T>::get(const std::string& name) {
         if (!registry_.contains(name)) {
             std::cout << std::format("Item with name '{}' does not exist.",

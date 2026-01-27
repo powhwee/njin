@@ -12,12 +12,16 @@ layout (location = 5) in vec2 frag_tex_coord;
 layout (location = 0) out vec4 out_color;
 
 // Texture samplers (set 1, binding 0)
-layout (set = 1, binding = 0) uniform sampler2D textures[16];
+layout (set = 1, binding = 0) uniform sampler2D textures[64];
 
 // Push constants
 layout (push_constant) uniform PushConstants {
     int model_index;
     int texture_index;
+    float base_color_r;  // Individual floats to match C++ struct layout
+    float base_color_g;
+    float base_color_b;
+    float base_color_a;
 } pc;
 
 void main() {
@@ -27,29 +31,24 @@ void main() {
     vec3 base_color;
     
     if (pc.texture_index >= 0) {
-        // Sample texture
-        base_color = texture(textures[pc.texture_index], frag_tex_coord).rgb;
+        // Sample texture and multiply by material color
+        vec3 mat_color = vec3(pc.base_color_r, pc.base_color_g, pc.base_color_b);
+        base_color = texture(textures[pc.texture_index], frag_tex_coord).rgb * mat_color;
     } else {
-        // Check if we have non-trivial vertex colors
-        bool has_vertex_color = (frag_color.r < 0.99 || frag_color.g < 0.99 || frag_color.b < 0.99)
-                             && (frag_color.r > 0.01 || frag_color.g > 0.01 || frag_color.b > 0.01);
-        if (has_vertex_color) {
-            base_color = frag_color.rgb;
-        } else {
-            base_color = vec3(0.8);  // Default gray
-        }
+        // Use material's base color factor
+        base_color = vec3(pc.base_color_r, pc.base_color_g, pc.base_color_b);
     }
 
-    // Light sources
+    // Light sources - reduced intensity for better color preservation
     vec3 light_dirs[3];
     light_dirs[0] = normalize(vec3(1.0, 1.0, 1.0));
     light_dirs[1] = normalize(vec3(-1.0, 1.0, -1.0));
     light_dirs[2] = normalize(vec3(1.0, -1.0, -1.0));
 
     vec3 light_colors[3];
-    light_colors[0] = vec3(1.0); // full intensity
-    light_colors[1] = vec3(0.7); // slightly less
-    light_colors[2] = vec3(0.3); // fill light
+    light_colors[0] = vec3(0.6); // reduced from 1.0
+    light_colors[1] = vec3(0.4); // reduced from 0.7
+    light_colors[2] = vec3(0.2); // reduced from 0.3
 
     vec3 total_diffuse = vec3(0.0);
     vec3 total_specular = vec3(0.0);
@@ -59,27 +58,27 @@ void main() {
         float diff = max(dot(N, light_dirs[i]), 0.0);
         total_diffuse += diff * light_colors[i];
 
-        // Specular
-        float specular_strength = 0.5;
+        // Specular - reduced
+        float specular_strength = 0.3;
         vec3 reflect_dir = reflect(-light_dirs[i], N);
         float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
         total_specular += specular_strength * spec * light_colors[i];
     }
 
-    // Rim lighting (subtle)
+    // Rim lighting - reduced
     float rim_power = 4.0;
     float rim_amount = 1.0 - max(dot(view_dir, N), 0.0);
-    float rim = pow(rim_amount, rim_power) * 0.3;
+    float rim = pow(rim_amount, rim_power) * 0.15;
     vec3 rim_color = vec3(1.0, 1.0, 1.0) * rim;
 
-    // Ambient
-    float ambient_strength = 0.15;
+    // Ambient - slightly increased to compensate for reduced direct lighting
+    float ambient_strength = 0.25;
     vec3 ambient = ambient_strength * vec3(1.0);
 
     vec3 result = (ambient + total_diffuse) * base_color + total_specular + rim_color;
 
-    // Tone mapping (simple Reinhard)
-    result = result / (result + vec3(1.0));
+    // Lighter tone mapping - preserve more color saturation
+    result = result / (result + vec3(0.5));
 
     // Gamma correction
     float gamma = 2.2;

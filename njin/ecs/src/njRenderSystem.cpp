@@ -222,6 +222,7 @@ namespace njin::ecs {
 
             for (const auto& primitive : mesh_data->get_primitives()) {
                 std::string texture_name = mesh_component->texture_override;
+                float base_r = 1.0f, base_g = 1.0f, base_b = 1.0f, base_a = 1.0f;
 
                 if (texture_name.empty()) {
                     std::string material_name = primitive.get_material_name();
@@ -229,8 +230,16 @@ namespace njin::ecs {
                     if (!material_name.empty()) {
                         const auto* material = material_registry_->get(material_name);
                         
-                        if (material && !material->base_color_texture_name.empty()) {
-                            texture_name = material->base_color_texture_name;
+                        if (material) {
+                            // Get base color factor from material
+                            base_r = material->base_color_factor.x;
+                            base_g = material->base_color_factor.y;
+                            base_b = material->base_color_factor.z;
+                            base_a = material->base_color_factor.w;
+                            
+                            if (!material->base_color_texture_name.empty()) {
+                                texture_name = material->base_color_texture_name;
+                            }
                         }
                     }
                 }
@@ -239,6 +248,10 @@ namespace njin::ecs {
                     .global_transform = transform->transform,
                     .mesh_name = mesh_component->mesh,
                     .texture_name = texture_name,
+                    .base_color_r = base_r,
+                    .base_color_g = base_g,
+                    .base_color_b = base_b,
+                    .base_color_a = base_a
                 };
                 core::Renderable renderable{ .type = RenderType::Mesh, .data = data };
                 renderables.push_back(renderable);

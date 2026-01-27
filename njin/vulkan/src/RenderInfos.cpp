@@ -251,6 +251,10 @@ namespace njin::vulkan {
                     MeshRenderInfo mesh_info{
                         .model_index = current_model_index,
                         .texture_index = tex_idx,
+                        .base_color_r = data.base_color_r,
+                        .base_color_g = data.base_color_g,
+                        .base_color_b = data.base_color_b,
+                        .base_color_a = data.base_color_a,
                         .vertex_offset = 0, 
                         .first_index = current_index_offset,
                         .index_count = static_cast<uint32_t>(primitive.get_indices().size())
