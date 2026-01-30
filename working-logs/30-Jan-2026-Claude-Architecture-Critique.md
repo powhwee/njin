@@ -1,5 +1,6 @@
 # njin Architecture Critique
 
+**Author:** Claude (Anthropic)  
 **Date:** 30 January 2026  
 **Current Version:** v0.5.1
 
