@@ -3,15 +3,15 @@
 namespace njin::core {
 
     njTexture::njTexture(const njTextureCreateInfo& data) :
+        name{ data.name },
         data_{ data.data },
         width_{ data.width },
         height_{ data.height },
-        channels_{ data.channels },
-        name{ data.name },
         size_{ [data] {
             return static_cast<int>(data.width * data.height *
                                     sizeof(unsigned int));
-        }() } {}
+        }() },
+        channels_{ data.channels } {}
 
     ImageData njTexture::get_data() const {
         return data_;

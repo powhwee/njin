@@ -77,22 +77,26 @@ namespace njin::vulkan {
                         in_flight_fences_[current_frame_]->get_handle_address(),
                         VK_TRUE,
                         UINT64_MAX);
-        vkResetFences(device_->get(), 1, in_flight_fences_[current_frame_]->get_handle_address());
 
-        // Note: We don't call free_buffers() here because with multiple frames in flight,
-        // command buffers from other frames may still be executing.
         // get the index of the next image that will be available
-        // NOTE: this does not mean the image can be written to
-        // see https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#vkAcquireNextImageKHR
-        // "The presentation engine may not have finished reading from the image...
-        // ...the application must use semaphore and/or fence..."
         uint32_t image_index{ 0 };
-        vkAcquireNextImageKHR(device_->get(),
+        VkResult acquire_result = vkAcquireNextImageKHR(device_->get(),
                               swapchain_->get(),
                               UINT64_MAX,
                               image_available_semaphores_[current_frame_]->get(),
                               VK_NULL_HANDLE,
                               &image_index);
+        
+        if (acquire_result == VK_ERROR_OUT_OF_DATE_KHR) {
+            // Swapchain needs recreation - skip this frame
+            // TODO: implement swapchain recreation
+            return;
+        } else if (acquire_result != VK_SUCCESS && acquire_result != VK_SUBOPTIMAL_KHR) {
+            throw std::runtime_error("Failed to acquire swapchain image");
+        }
+
+        // Only reset the fence AFTER successful acquire
+        vkResetFences(device_->get(), 1, in_flight_fences_[current_frame_]->get_handle_address());
         CommandBuffer command_buffer{
             resources_->get_command_pool()
             .allocate_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY)

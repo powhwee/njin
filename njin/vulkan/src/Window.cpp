@@ -12,8 +12,7 @@ namespace njin::vulkan {
                    SDL_WindowFlags flags) {
         window_ = SDL_CreateWindow(name.c_str(), width, height, flags);
         if (!window_) {
-            std::cerr << "Failed to create window: " << SDL_GetError() <<
-            std::endl;
+            throw std::runtime_error(std::string("Failed to create window: ") + SDL_GetError());
         }
     }
 

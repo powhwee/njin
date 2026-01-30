@@ -17,6 +17,9 @@
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #include <windows.h>
+#ifdef GetObject
+#undef GetObject
+#endif
 #endif
 
 uint32_t MAGIC{ 0x46'54'6C'67 };
@@ -55,7 +58,7 @@ namespace {
         std::vector<gltf::BufferView> result{};
         rj::GenericArray buffer_views{ document["bufferViews"].GetArray() };
         for (auto it{ buffer_views.begin() }; it != buffer_views.end(); ++it) {
-            rj::GenericObject buffer_view{ it->GetObject() };
+            auto buffer_view = it->GetObject();
 
             gltf::BufferViewInfo info{};
             info.buffer = buffer_view["buffer"].GetInt();
@@ -119,6 +122,7 @@ namespace {
         } else if (type == "MAT4") {
             return Type::Mat4;
         }
+        throw std::runtime_error("Unknown glTF type: " + type);
     }
 
     gltf::ComponentType get_component_type(int component_type) {
@@ -143,13 +147,13 @@ namespace {
         throw std::runtime_error("Unsupported component type");
     }
 
-            template<typename ValueT>
+            template<bool Const, typename ValueT>
 
             gltf::Accessor::AccessorCreateInfo
 
             make_accessor_create_info(const std::vector<gltf::BufferView>& buffer_views,
 
-                                      const rj::GenericObject<false, ValueT>&
+                                      const rj::GenericObject<Const, ValueT>&
 
                                       accessor) {
 
@@ -245,7 +249,7 @@ namespace {
 
                 for (auto it{ images.begin() }; it != images.end(); ++it) {
 
-                    rj::GenericObject image_obj{ it->GetObject() };
+                    auto image_obj = it->GetObject();
 
                     // Name from glTF or generated
 
@@ -283,7 +287,7 @@ namespace {
 
                 for (auto it{ textures.begin() }; it != textures.end(); ++it) {
 
-                    rj::GenericObject texture_obj{ it->GetObject() };
+                    auto texture_obj = it->GetObject();
 
                     int source_image_index = texture_obj["source"].GetInt();
 
@@ -327,7 +331,7 @@ namespace {
 
                 for (auto it{ materials.begin() }; it != materials.end(); ++it) {
 
-                    rj::GenericObject material_obj{ it->GetObject() };
+                    auto material_obj = it->GetObject();
 
                     TempMaterial temp{};
 
@@ -337,7 +341,7 @@ namespace {
 
                     if (material_obj.HasMember("pbrMetallicRoughness")) {
 
-                        rj::GenericObject pbr = material_obj["pbrMetallicRoughness"].GetObject();
+                        auto pbr = material_obj["pbrMetallicRoughness"].GetObject();
 
                         if (pbr.HasMember("baseColorFactor")) {
 
@@ -504,9 +508,7 @@ namespace {
 
                 // indices
                 int indices_accessor_index{ primitive["indices"].GetInt() };
-                rj::GenericObject gltf_indices_accessor{
-                    accessors[indices_accessor_index].GetObject()
-                };
+                auto gltf_indices_accessor = accessors[indices_accessor_index].GetObject();
                 gltf::Accessor::AccessorCreateInfo indices_accessor_info{
                     make_accessor_create_info(buffer_views_, gltf_indices_accessor)
                 };
@@ -520,13 +522,11 @@ namespace {
                 }
 
                 // attributes
-                rj::GenericObject attribute{ primitive["attributes"].GetObject() };
+                auto attribute = primitive["attributes"].GetObject();
 
                 // position
                 int position_accessor_index{ attribute["POSITION"].GetInt() };
-                rj::GenericObject gltf_position_accessor{
-                    accessors[position_accessor_index].GetObject()
-                };
+                auto gltf_position_accessor = accessors[position_accessor_index].GetObject();
                 gltf::Accessor::AccessorCreateInfo position_accessor_info{
                     make_accessor_create_info(buffer_views_, gltf_position_accessor)
                 };
@@ -537,9 +537,7 @@ namespace {
                 std::vector<math::njVec3f> normals{};
                 if (attribute.HasMember("NORMAL")) {
                     int normal_accessor_index{ attribute["NORMAL"].GetInt() };
-                    rj::GenericObject gltf_normal_accessor{
-                        accessors[normal_accessor_index].GetObject()
-                    };
+                    auto gltf_normal_accessor = accessors[normal_accessor_index].GetObject();
                     gltf::Accessor::AccessorCreateInfo normal_accessor_info{
                         make_accessor_create_info(buffer_views_, gltf_normal_accessor)
                     };
@@ -551,9 +549,7 @@ namespace {
                 std::vector<math::njVec4f> tangents{};
                 if (attribute.HasMember("TANGENT")) {
                     int tangent_accessor_index{ attribute["TANGENT"].GetInt() };
-                    rj::GenericObject gltf_tangent_accessor{
-                        accessors[tangent_accessor_index].GetObject()
-                    };
+                    auto gltf_tangent_accessor = accessors[tangent_accessor_index].GetObject();
                     gltf::Accessor::AccessorCreateInfo tangent_accessor_info{
                         make_accessor_create_info(buffer_views_, gltf_tangent_accessor)
                     };
@@ -565,9 +561,7 @@ namespace {
                 std::vector<math::njVec2f> tex_coords{};
                 if (attribute.HasMember("TEXCOORD_0")) {
                     int tex_coord_accessor_index{ attribute["TEXCOORD_0"].GetInt() };
-                    rj::GenericObject gltf_tex_coord_accessor{
-                        accessors[tex_coord_accessor_index].GetObject()
-                    };
+                    auto gltf_tex_coord_accessor = accessors[tex_coord_accessor_index].GetObject();
                     Accessor::AccessorCreateInfo tex_coord_accessor_info{
                         make_accessor_create_info(buffer_views_, gltf_tex_coord_accessor)
                     };
@@ -579,9 +573,7 @@ namespace {
                 std::vector<math::njVec4<uint16_t>> colors{};
                 if (attribute.HasMember("COLOR_0")) {
                     int color_accessor_index{ attribute["COLOR_0"].GetInt() };
-                    rj::GenericObject gltf_color_accessor{
-                        accessors[color_accessor_index].GetObject()
-                    };
+                    auto gltf_color_accessor = accessors[color_accessor_index].GetObject();
                     Accessor::AccessorCreateInfo color_accessor_info{
                         make_accessor_create_info(buffer_views_, gltf_color_accessor)
                     };

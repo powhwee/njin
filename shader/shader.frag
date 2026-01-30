@@ -12,7 +12,7 @@ layout (location = 5) in vec2 frag_tex_coord;
 layout (location = 0) out vec4 out_color;
 
 // Texture samplers (set 1, binding 0)
-layout (set = 1, binding = 0) uniform sampler2D textures[64];
+layout (set = 1, binding = 0) uniform sampler2D textures[16];
 
 // Push constants
 layout (push_constant) uniform PushConstants {

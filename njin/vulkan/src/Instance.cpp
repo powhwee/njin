@@ -156,8 +156,10 @@ namespace njin::vulkan {
         info.flags = 0;
         info.pApplicationInfo = &application_info;
 
+#ifdef __APPLE__
         info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
 
         // on debug builds we want one additional validation layer on top
         // of the main vulkan instance

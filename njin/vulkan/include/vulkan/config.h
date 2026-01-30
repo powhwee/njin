@@ -49,7 +49,7 @@ namespace njin::vulkan {
         .name = "view_projection",
         .binding = 1,
         .descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptor_count = 16,
+        .descriptor_count = 1,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
@@ -72,7 +72,7 @@ namespace njin::vulkan {
         .name = "image",
         .binding = 0,
         .descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .descriptor_count = 64,
+        .descriptor_count = 16,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .extra_info =
         SetLayoutBindingImageInfo{

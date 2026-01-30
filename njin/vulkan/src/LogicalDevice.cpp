@@ -107,7 +107,9 @@ namespace {
 namespace njin::vulkan {
     LogicalDevice::LogicalDevice(const PhysicalDevice& physical_device) {
         std::vector<const char*> device_extensions = physical_device_extensions;
+#ifdef __APPLE__
         device_extensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
 
         if (
         !check_physical_device_extension_support(physical_device,
