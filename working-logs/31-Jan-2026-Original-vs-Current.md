@@ -71,10 +71,10 @@ The following roadmap aligns with your original data-driven vision:
 
 | Priority | Task | Description |
 |----------|------|-------------|
-| **P1** | Fix or remove `RoomBuilder` | It's broken. Either update to use `get_primary_mesh_name()` or delete if unused. |
-| **P2** | Create `main.scene` config | Replace hardcoded entity creation in `main.cpp` with JSON configuration. |
-| **P3** | Implement `njSceneLoader` | Read `main.scene` and spawn ECS entities. This fulfills the data-driven scene graph intent. |
-| **P4** | Clean up test artifacts | Remove orphaned `njScene`/`njSceneReader` test directories. |
+| **P1** | Fix or remove `RoomBuilder` | **DONE**. Updated to configurable mesh/texture params. Verification passed. |
+| **P2** | Create `main.scene` config | **DONE**. Replaced hardcoded entity creation in `main.cpp` with JSON configuration. |
+| **P3** | Implement `njSceneLoader` | **DONE**. Implemented in `ecs` module to resolve circular dependency. Spawns entities from `main.scene`. |
+| **P4** | Clean up test artifacts | **DONE**. Replaced legacy `njScene` artifacts with new unit tests (`njSceneLoader_test.cpp`). |
 
 ---
 

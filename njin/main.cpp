@@ -10,6 +10,7 @@
 #include <SDL3/SDL_main.h>
 
 #include "core/loader.h"
+#include "ecs/njSceneLoader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
 #include "ecs/njArchetype.h"
@@ -136,62 +137,9 @@ int main() {
         core::RenderBuffer render_buffer{};
         engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer, mesh_registry, material_registry, texture_registry));
 
-        ecs::PerspectiveCameraSettings camera_settings{ .near = 0.1f, .far = 1000.f, .horizontal_fov = 90.f };
-        ecs::njCameraArchetypeCreateInfo camera_info{
-            .name = "camera",
-            .transform = ecs::njTransformComponent::make(10.f, -8.f, 10.f),
-            .camera = { .type = ecs::njCameraType::Perspective,
-                        .up = { 0.f, 1.f, 0.f },
-                        .look_at = { 0.f, 3.f, 0.f },
-                        .aspect = 16.f / 9.f,
-                        .settings = camera_settings }
-        };
-
-        ecs::njCameraArchetype camera_archetype{ camera_info };
-        engine.add_archetype(camera_archetype);
-
-        // Load all meshes for "cube" alias (multi-part model support)
-        auto car_meshes = mesh_registry.get_all_mesh_names("cube");
-        std::cout << "Found " << car_meshes.size() << " meshes for 'cube' alias." << std::endl;
-        for (const auto& mesh_name : car_meshes) {
-            // Create translation matrix
-            math::njMat4f translation{ math::njMat4Type::Translation, math::njVec3f{5.f, 0.f, 0.f} };
-            
-            // Create -90 degree rotation around X axis (x,y,z,w format)
-            float angle_x = -3.14159f / 2.f;
-            float half_x = angle_x / 2.f;
-            math::njVec4f quat_x{ std::sin(half_x), 0.f, 0.f, std::cos(half_x) };
-            math::njMat4f rotation_x{ quat_x };
-            
-            // No Y rotation for now
-            math::njMat4f rotation_y = math::njMat4f::Identity();
-            
-            // Combine: first rotate X, then rotate Y, then translate
-            math::njMat4f final_transform = translation * rotation_y * rotation_x;
-            
-            ecs::njObjectArchetypeCreateInfo car_part_info{
-                .name = mesh_name,
-                .transform = { .transform = final_transform },
-                .mesh = { .mesh = mesh_name, .texture_override = "" }
-            };
-            ecs::njObjectArchetype car_part_archetype{ car_part_info, mesh_registry };
-            engine.add_archetype(car_part_archetype);
-        }
-
-        // Create player with physics
-        ecs::njInputComponent input{}; // Default constructed input
-
-        ecs::njPlayerArchetypeCreateInfo player_archetype_info{
-            .name = "player",
-            .transform = ecs::njTransformComponent::make(0.f, 1.f, 0.f),
-            .input = input,
-            .mesh = { .mesh = mesh_registry.get_primary_mesh_name("player"), .texture_override = "" },
-            .intent = {},
-            .physics = { .mass = 1.0f, .type = ecs::RigidBodyType::Dynamic }
-        };
-        ecs::njPlayerArchetype player_archetype{ player_archetype_info };
-        engine.add_archetype(player_archetype);
-        std::cout << "Player archetype created." << std::endl;
+        // Load scene from configuration file
+        ecs::njSceneLoader scene_loader{ "main.scene", mesh_registry, material_registry, texture_registry };
+        scene_loader.load(engine);
 
         auto start_time = std::chrono::high_resolution_clock::now();
         std::cout << "Entering main loop..." << std::endl;

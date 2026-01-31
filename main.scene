@@ -1,0 +1,31 @@
+{
+  "camera": {
+    "name": "camera",
+    "position": [10.0, -8.0, 10.0],
+    "look_at": [0.0, 3.0, 0.0],
+    "up": [0.0, 1.0, 0.0],
+    "type": "perspective",
+    "fov": 90.0,
+    "near": 0.1,
+    "far": 1000.0,
+    "aspect": 1.777778
+  },
+  "entities": [
+    {
+      "name": "cube_model",
+      "mesh_alias": "cube",
+      "position": [5.0, 0.0, 0.0],
+      "rotation_x_degrees": -90.0
+    },
+    {
+      "name": "player",
+      "archetype": "player",
+      "mesh_alias": "player",
+      "position": [0.0, 1.0, 0.0],
+      "physics": {
+        "mass": 1.0,
+        "type": "dynamic"
+      }
+    }
+  ]
+}

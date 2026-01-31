@@ -15,10 +15,12 @@ namespace mnt {
          * Constructor
          * @param size Width of room
          * @param coordinate Coordinate of bottom-left of room
+         * @param mesh_alias Alias of the mesh to use for tiles (e.g., "cube")
          * @param mesh_registry Registry containing meshes
          */
         RoomBuilder(RoomSize size,
                     Coordinate coordinate,
+                    const std::string& mesh_alias,
                     const njin::core::njRegistry<njin::core::njMesh>& mesh_registry);
 
         /**
@@ -30,6 +32,7 @@ namespace mnt {
         private:
         RoomSize size_{};
         Coordinate coordinate_{};
+        std::string mesh_alias_{};
         const njin::core::njRegistry<njin::core::njMesh>* mesh_registry_{};
     };
 

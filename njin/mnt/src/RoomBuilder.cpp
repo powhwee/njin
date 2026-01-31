@@ -4,9 +4,11 @@ using namespace njin;
 namespace mnt {
     RoomBuilder::RoomBuilder(RoomSize size,
                              Coordinate coordinate,
+                             const std::string& mesh_alias,
                              const njin::core::njRegistry<njin::core::njMesh>& mesh_registry) :
         size_{ size },
         coordinate_{ coordinate },
+        mesh_alias_{ mesh_alias },
         mesh_registry_{ &mesh_registry } {}
 
     std::vector<ecs::njObjectArchetype> RoomBuilder::build() const {
@@ -28,7 +30,7 @@ namespace mnt {
                 ecs::njObjectArchetypeCreateInfo info{
                     .name = "",
                     .transform = transform,
-                    .mesh = { .mesh = "cube", .texture_override = "statue" }
+                    .mesh = { .mesh = mesh_registry_->get_primary_mesh_name(mesh_alias_), .texture_override = "" }
                 };
 
                 tiles.emplace_back(info, *mesh_registry_);
