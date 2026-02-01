@@ -29,3 +29,21 @@ We needed to support rendering >16 objects.
 
 ## Recommendation
 Transition to **Option B** before shipping on macOS.
+
+## Deep Dive: Descriptor Efficiency
+
+### Does "More Descriptors" mean slower?
+**Yes.** To the GPU and Driver, descriptors are "paperwork".
+
+1.  **CPU Overhead (Death by 1000 cuts):**
+    *   **Option A:** Driver validates and updates 1024 pointers frame-by-frame.
+    *   **Option B:** Driver updates 1 base pointer.
+2.  **Hardware Limits (The Wall):**
+    *   GPUs typically only have ~31 "fast slots" (registers) for bound buffers. Exceeding this forces the driver to swap descriptors in/out of slow memory.
+
+### Why do we use descriptors at all?
+If fewer is better, why isn't everything just one descriptor?
+1.  **Organization (Frequency):** We separate data by update frequency (Set 0 = Camera/Global, Set 1 = Material/Static, Set 2 = Object/Dynamic) to avoid rebinding static data.
+2.  **Disparate Resources:** A 1024x texture and a 256x texture cannot live in the same array structure. They need separate pointers (descriptors).
+
+**The Modern Shift:** Modern engines (Unreal 5, Doom Eternal) use **Bindless Rendering** (Option B on steroids), treating all resources as giant indices in a single heap, minimizing descriptor binding to almost zero.
