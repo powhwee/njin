@@ -19,6 +19,8 @@ namespace njin::vulkan {
    * of each entity
    */
     constexpr int MAX_OBJECTS = 1024;
+    // TODO: MAX_OBJECTS=1024 uses 1024 descriptors (Option A). This likely breaks Mac/MoltenVK compatibility (limit ~31).
+    // Future Refactor: Switch to Single SSBO (Option B) which uses 1 descriptor containing an array of matrices.
 
     struct DESCRIPTOR_SET_LAYOUT_BINDING_MODEL_FORMAT {
         math::njMat4f model;
