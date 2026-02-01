@@ -18,7 +18,7 @@ namespace njin::vulkan {
    * Binding 1: View and projection matrices for the camera. This is independent
    * of each entity
    */
-    constexpr int MAX_OBJECTS = 16;
+    constexpr int MAX_OBJECTS = 1024;
 
     struct DESCRIPTOR_SET_LAYOUT_BINDING_MODEL_FORMAT {
         math::njMat4f model;
@@ -30,7 +30,7 @@ namespace njin::vulkan {
         .name = "model",
         .binding = 0,
         .descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        .descriptor_count = 16,
+        .descriptor_count = MAX_OBJECTS,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .extra_info =
         SetLayoutBindingBufferInfo{
@@ -72,7 +72,7 @@ namespace njin::vulkan {
         .name = "image",
         .binding = 0,
         .descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .descriptor_count = 16,
+        .descriptor_count = MAX_OBJECTS,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .extra_info =
         SetLayoutBindingImageInfo{

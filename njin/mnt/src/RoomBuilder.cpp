@@ -1,4 +1,5 @@
 #include "mnt/RoomBuilder.h"
+
 using namespace njin;
 
 namespace mnt {
@@ -16,19 +17,21 @@ namespace mnt {
 
         for (uint32_t i{ 0 }; i < size_; ++i) {
             for (uint32_t j{ 0 }; j < size_; ++j) {
+                float x = coordinate_.x + static_cast<float>(i * 5);
+                float y = coordinate_.y;
+                float z = coordinate_.z - static_cast<float>(j * 5);
+                
                 // translation of tile
                 math::njMat4f location{
                     math::njMat4Type::Translation,
-                    { coordinate_.x - static_cast<float>(i * 2),
-                      coordinate_.y,
-                      coordinate_.z + static_cast<float>(j * 2) }
+                    { x, y, z }
                 };
                 ecs::njTransformComponent transform{
                     .transform = location
                 };
 
                 ecs::njObjectArchetypeCreateInfo info{
-                    .name = "",
+                    .name = "tile_" + std::to_string(i) + "_" + std::to_string(j),
                     .transform = transform,
                     .mesh = { .mesh = mesh_registry_->get_primary_mesh_name(mesh_alias_), .texture_override = "" }
                 };

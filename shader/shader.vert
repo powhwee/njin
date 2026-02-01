@@ -20,7 +20,7 @@ layout (location = 5) out vec2 frag_tex_coord;
 // model matrix
 layout (set = 0, binding = 0) readonly buffer Model {
     mat4 model;
-} models[16];
+} models[1024];
 
 // view-projection matrix
 layout (set = 0, binding = 1) uniform VP {

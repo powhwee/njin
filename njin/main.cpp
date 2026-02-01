@@ -141,6 +141,14 @@ int main() {
         ecs::njSceneLoader scene_loader{ "main.scene", mesh_registry, material_registry, texture_registry };
         scene_loader.load(engine);
 
+        // Generate a tile floor using RoomBuilder
+        // TODO: Only ~10 of 25 tiles render visually - investigate rendering pipeline issue
+        mnt::RoomBuilder room_builder{ 5, math::njVec3f{-6.f, -2.f, 6.f}, "tile", mesh_registry };
+        auto tiles = room_builder.build();
+        for (auto& tile : tiles) {
+            engine.add_archetype(tile);
+        }
+
         auto start_time = std::chrono::high_resolution_clock::now();
         std::cout << "Entering main loop..." << std::endl;
 

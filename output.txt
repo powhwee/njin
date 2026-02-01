@@ -1,0 +1,149 @@
+Starting njin...
+SDL initialized.
+Window created.
+windows_get_app_package_manifest_path: Failed to find mapping layers packages by family name
+Checking for Layer Manifest files in Registry at HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers
+windows_add_json_entry: Located json file "C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\nv-vk64.json" from PnP registry: E
+Located json file "C:\Program Files (x86)\Steam\SteamOverlayVulkanLayer64.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers"
+Located json file "C:\Program Files (x86)\Steam\SteamFossilizeVulkanLayer64.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers"
+Found manifest file C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\nv-vk64.json (file version 1.0.1)
+Found manifest file C:\Program Files (x86)\Steam\SteamOverlayVulkanLayer64.json (file version 1.0.0)
+Found manifest file C:\Program Files (x86)\Steam\SteamFossilizeVulkanLayer64.json (file version 1.0.0)
+Checking for Layer Manifest files in Registry at HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers
+windows_get_device_registry_files: opening device SWD\RemoteDisplayEnum\RdpIdd_IndirectDisplay&SessionId_0001
+windows_get_device_registry_entry: Device ID(2) Does not contain a value for "VulkanExplicitLayers"
+windows_get_device_registry_files: Opening child device 96 - DISPLAY\DEFAULT_MONITOR\1&C528B8A&0&UID256
+windows_get_device_registry_files: GUID for 96 is not SoftwareComponent skipping
+windows_get_device_registry_files: opening device PCI\VEN_10DE&DEV_1B82&SUBSYS_C3031462&REV_A1\4&2d78ab8f&0&0008
+windows_get_device_registry_entry: Device ID(1) Does not contain a value for "VulkanExplicitLayers"
+windows_get_device_registry_files: Opening child device 26 - DISPLAY\DELA0E7\5&268730A0&0&UID4354
+windows_get_device_registry_files: GUID for 26 is not SoftwareComponent skipping
+windows_get_device_registry_files: found no registry files
+Located json file "C:\Program Files\Rockstar Games\Social Club\SocialClubVulkanLayer.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_api_dump.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_gfxreconstruct.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_synchronization2.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_validation.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_monitor.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_screenshot.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_profiles.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_shader_object.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Located json file "C:\VulkanSDK\1.4.335.0\Bin\VkLayer_crash_diagnostic.json" from registry "HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ExplicitLayers"
+Found manifest file C:\Program Files\Rockstar Games\Social Club\SocialClubVulkanLayer.json (file version 1.0.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_api_dump.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_gfxreconstruct.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_synchronization2.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_validation.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_monitor.json (file version 1.0.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_screenshot.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_profiles.json (file version 1.2.1)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_shader_object.json (file version 1.2.0)
+Found manifest file C:\VulkanSDK\1.4.335.0\Bin\VkLayer_crash_diagnostic.json (file version 1.2.0)
+windows_get_app_package_manifest_path: Failed to find mapping layers packages by family name
+Checking for Driver Manifest files in Registry at HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\Drivers
+windows_add_json_entry: Located json file "C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\nv-vk64.json" from PnP registry: E
+Found no registry files in HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\Drivers
+Found ICD manifest file C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\nv-vk64.json, version 1.0.1
+Searching for ICD drivers named .\nvoglv64.dll
+Loading layer library C:\VulkanSDK\1.4.335.0\Bin\.\VkLayer_khronos_validation.dll
+Insert instance layer "VK_LAYER_KHRONOS_validation" (C:\VulkanSDK\1.4.335.0\Bin\.\VkLayer_khronos_validation.dll)
+Loading layer library C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\.\nvoglv64.dll
+Insert instance layer "VK_LAYER_NV_optimus" (C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\.\nvoglv64.dll)
+vkCreateInstance layer callstack setup to:
+   <Application>
+     ||
+   <Loader>
+     ||
+   VK_LAYER_NV_optimus
+           Type: Implicit
+               Disable Env Var:  DISABLE_LAYER_NV_OPTIMUS_1
+           Manifest: C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\nv-vk64.json
+           Library:  C:\WINDOWS\System32\DriverStore\FileRepository\nvmd.inf_amd64_aa54f7a758543a0a\.\nvoglv64.dll
+     ||
+   VK_LAYER_KHRONOS_validation
+           Type: Explicit
+           Manifest: C:\VulkanSDK\1.4.335.0\Bin\VkLayer_khronos_validation.json
+           Library:  C:\VulkanSDK\1.4.335.0\Bin\.\VkLayer_khronos_validation.dll
+     ||
+   <Drivers>
+vkCreateInstance(): DebugPrintf logs to the Information message severity, enabling Information level logging otherwise the message will not be seen.
+vkCreateInstance(): Khronos Validation Layer Active:
+    Current Enables: VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT.
+    Current Disables: None.
+
+Instance created.
+Physical device selected: NVIDIA GeForce GTX 1070 Ti
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Forcing fragmentStoresAndAtomics to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Forcing vertexPipelineStoresAndAtomics to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Forcing shaderInt64 to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Adding a VkPhysicalDeviceTimelineSemaphoreFeatures to pNext with timelineSemaphore set to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Adding a VkPhysicalDeviceVulkanMemoryModelFeatures to pNext with vulkanMemoryModel and vulkanMemoryModelDeviceScope set to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Adding a VkPhysicalDeviceBufferDeviceAddressFeatures to pNext with bufferDeviceAddress set to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Adding a VkPhysicalDeviceScalarBlockLayoutFeatures to pNext with scalarBlockLayout set to VK_TRUE
+
+Validation Warning: [ WARNING-Setting-Limit-Adjusted ] | MessageID = 0x86fe6721
+vkCreateDevice(): Internal Warning: Adding a VkPhysicalDevice8BitStorageFeatures to pNext with storageBuffer8BitAccess set to VK_TRUE
+
+Logical device created.
+RenderResources created.
+Renderer created.
+Loading meshes...
+    Primitive has 9730 vertices and 57024 indices
+  Finished loading mesh 'Object_0' with 1 primitives
+    Primitive has 2102 vertices and 12204 indices
+  Finished loading mesh 'Object_1' with 1 primitives
+    Primitive has 65532 vertices and 322803 indices
+  Finished loading mesh 'Object_2' with 1 primitives
+    Primitive has 65532 vertices and 325068 indices
+  Finished loading mesh 'Object_3' with 1 primitives
+    Primitive has 26407 vertices and 66069 indices
+  Finished loading mesh 'Object_4' with 1 primitives
+[GLTFAsset] Material 'Material.001' has pbrMetallicRoughness but NO baseColorTexture
+[GLTFAsset] Found baseColorTexture index 0 for material 'stitch_shading'
+[GLTFAsset] Material 'cube-Material.001' has NO texture (index -1, textures count 1)
+[GLTFAsset] Material 'cube-stitch_shading' -> texture 'cube-texture_1' (index 0)
+Loading mesh: Object_0
+  Processing primitive 0
+Loading mesh: Object_1
+  Processing primitive 0
+Loading mesh: Object_2
+  Processing primitive 0
+Loading mesh: Object_3
+  Processing primitive 0
+Loading mesh: Object_4
+  Processing primitive 0
+Registered mesh: cube-Object_0
+Registered mesh: cube-Object_1
+Registered mesh: cube-Object_2
+Registered mesh: cube-Object_3
+Registered mesh: cube-Object_4
+Registered material: cube-Material.001
+Registered material: cube-stitch_shading
+Registered texture: cube-texture_1
+    Primitive has 24 vertices and 36 indices
+  Finished loading mesh 'Cube' with 1 primitives
+Loading mesh: Cube
+  Processing primitive 0
+Registered mesh: player-Cube
+Loading textures...
+Loading scene from: main.scene
+Camera 'camera' loaded.
+Found 5 meshes for 'cube' alias.
+Player 'player' loaded.
+Scene loaded successfully.
+Room floor generated.
+Entering main loop...
+Frame: 1
