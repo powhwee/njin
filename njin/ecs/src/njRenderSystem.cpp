@@ -1,10 +1,11 @@
 #include "ecs/njRenderSystem.h"
 
 #include <numbers>
-#include <cmath>
 
 #include "core/Types.h"
 #include "ecs/Components.h"
+
+#include <cmath>
 
 namespace njin::ecs {
     namespace {
@@ -101,7 +102,7 @@ namespace njin::ecs {
                          { 0, 0, 1 / (n - f), n / (n - f) },
                          { 0, 0, 0, 1 } };
             }
-            return math::njMat4f::Identity(); // Fallback for return warning
+            return math::njMat4f::Identity();  // Fallback for return warning
         }
 
         /**
@@ -114,9 +115,41 @@ namespace njin::ecs {
         math::njMat4f
         calculate_model_matrix(const njEntityManager& entity_manager,
                                EntityId id) {
-            // NOTE: this traverses the entire hierarchy for each entity
-            // possible future improvement would be to do some caching
-            return math::njMat4f::Identity(); // Placeholder return
+            math::njMat4f transform = math::njMat4f::Identity();
+            EntityId current = id;
+
+            // Start with self
+            auto transform_view =
+            entity_manager.get_view<njTransformComponent>(current);
+            auto* transform_comp =
+            std::get<njTransformComponent*>(transform_view.second);
+            if (transform_comp) {
+                transform = transform_comp->transform;
+            }
+
+            // Climb up the hierarchy
+            while (true) {
+                auto parent_view =
+                entity_manager.get_view<njParentComponent>(current);
+                auto* parent_comp =
+                std::get<njParentComponent*>(parent_view.second);
+
+                if (!parent_comp)
+                    break;
+
+                EntityId parent_id = parent_comp->id;
+
+                auto parent_transform_view =
+                entity_manager.get_view<njTransformComponent>(parent_id);
+                auto* parent_transform_comp =
+                std::get<njTransformComponent*>(parent_transform_view.second);
+
+                if (parent_transform_comp) {
+                    transform = parent_transform_comp->transform * transform;
+                }
+                current = parent_id;
+            }
+            return transform;
         }
 
         /**
@@ -164,10 +197,11 @@ namespace njin::ecs {
         }
     }  // namespace
 
-    njRenderSystem::njRenderSystem(core::RenderBuffer& buffer,
-                               const core::njRegistry<core::njMesh>& mesh_registry,
-                               const core::njRegistry<core::njMaterial>& material_registry,
-                               const core::njRegistry<core::njTexture>& texture_registry) :
+    njRenderSystem::njRenderSystem(
+    core::RenderBuffer& buffer,
+    const core::njRegistry<core::njMesh>& mesh_registry,
+    const core::njRegistry<core::njMaterial>& material_registry,
+    const core::njRegistry<core::njTexture>& texture_registry) :
         njSystem{ TickGroup::Four },
         buffer_{ &buffer },
         mesh_registry_{ &mesh_registry },
@@ -179,6 +213,9 @@ namespace njin::ecs {
         const auto camera_views{
             entity_manager.get_views<njTransformComponent, njCameraComponent>()
         };
+
+        if (camera_views.empty())
+            return;
 
         const auto camera{
             std::get<njCameraComponent*>(camera_views[0].second)
@@ -198,62 +235,60 @@ namespace njin::ecs {
         // meshes
         // make the renderables and write into render buffer
         std::vector<core::Renderable> renderables{};
-        auto meshes_with_parents{
-            entity_manager.get_views<njMeshComponent, njTransformComponent, core::njMesh>()
-        };
 
-        // meshes with no parent entity
-        auto meshes_no_parents{
-            entity_manager
-            .get_views<Include<njMeshComponent, njTransformComponent>,
-                       Exclude<njParentComponent>>()
-        };
-        for (const auto& [entity, view] : meshes_no_parents) {
+        // Render ALL meshes (both parents and children)
+        auto all_meshes =
+        entity_manager.get_views<njMeshComponent, njTransformComponent>();
+
+        for (const auto& [entity, view] : all_meshes) {
             auto mesh_component{ std::get<njMeshComponent*>(view) };
-            auto transform{ std::get<njTransformComponent*>(view) };
-            
+
+            // Calculate proper global transform (handling hierarchy)
+            math::njMat4f global_transform =
+            calculate_model_matrix(entity_manager, entity);
+
             const auto* mesh_data = mesh_registry_->get(mesh_component->mesh);
             if (!mesh_data) {
-                std::cout << "[RenderSystem] Could not find mesh: " << mesh_component->mesh << std::endl;
+                // Silent skip or debug log
                 continue;
-            } else {
-                 // std::cout << "[RenderSystem] Rendering mesh: " << mesh_component->mesh << " with " << mesh_data->get_primitives().size() << " primitives" << std::endl;
             }
 
             for (const auto& primitive : mesh_data->get_primitives()) {
                 std::string texture_name = mesh_component->texture_override;
-                float base_r = 1.0f, base_g = 1.0f, base_b = 1.0f, base_a = 1.0f;
+                float base_r = 1.0f, base_g = 1.0f, base_b = 1.0f,
+                      base_a = 1.0f;
 
                 if (texture_name.empty()) {
                     std::string material_name = primitive.get_material_name();
-                    
+
                     if (!material_name.empty()) {
-                        const auto* material = material_registry_->get(material_name);
-                        
+                        const auto* material =
+                        material_registry_->get(material_name);
+
                         if (material) {
                             // Get base color factor from material
                             base_r = material->base_color_factor.x;
                             base_g = material->base_color_factor.y;
                             base_b = material->base_color_factor.z;
                             base_a = material->base_color_factor.w;
-                            
+
                             if (!material->base_color_texture_name.empty()) {
-                                texture_name = material->base_color_texture_name;
+                                texture_name =
+                                material->base_color_texture_name;
                             }
                         }
                     }
                 }
 
-                core::MeshData data{
-                    .global_transform = transform->transform,
-                    .mesh_name = mesh_component->mesh,
-                    .texture_name = texture_name,
-                    .base_color_r = base_r,
-                    .base_color_g = base_g,
-                    .base_color_b = base_b,
-                    .base_color_a = base_a
-                };
-                core::Renderable renderable{ .type = RenderType::Mesh, .data = data };
+                core::MeshData data{ .global_transform = global_transform,
+                                     .mesh_name = mesh_component->mesh,
+                                     .texture_name = texture_name,
+                                     .base_color_r = base_r,
+                                     .base_color_g = base_g,
+                                     .base_color_b = base_b,
+                                     .base_color_a = base_a };
+                core::Renderable renderable{ .type = RenderType::Mesh,
+                                             .data = data };
                 renderables.push_back(renderable);
             }
         }

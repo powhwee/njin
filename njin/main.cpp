@@ -1,16 +1,18 @@
 #include <chrono>
-#include <cmath>
 #include <ranges>
 #include <thread>
 
 #include <vulkan/image_setup.h>
 
+#include <cmath>
+
 #define SDL_MAIN_HANDLED
+#include <iostream>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
 #include "core/loader.h"
-#include "ecs/njSceneLoader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
 #include "ecs/njArchetype.h"
@@ -22,6 +24,7 @@
 #include "ecs/njPlayerArchetype.h"
 #include "ecs/njRenderSystem.h"
 #include "ecs/njSceneGraphSystem.h"
+#include "ecs/njSceneLoader.h"
 #include "math/njVec3.h"
 #include "mnt/RoomBuilder.h"
 #include "vulkan/AttachmentImages.h"
@@ -45,7 +48,6 @@
 #include "vulkan/util.h"
 
 #include <algorithm>
-#include <iostream>
 
 using namespace njin::vulkan;
 using namespace njin;
@@ -58,8 +60,9 @@ int main() {
     try {
         std::cout << "Starting njin..." << std::endl;
         namespace core = njin::core;
-        
-        SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
+
+        SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION,
+                           SDL_LOG_PRIORITY_VERBOSE);
         SDL_SetMainReady();
 
         if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
@@ -82,10 +85,11 @@ int main() {
 
         Surface surface{ instance, window };
         PhysicalDevice physical_device{ instance, surface };
-        
+
         VkPhysicalDeviceProperties props;
         vkGetPhysicalDeviceProperties(physical_device.get(), &props);
-        std::cout << "Physical device selected: " << props.deviceName << std::endl;
+        std::cout << "Physical device selected: " << props.deviceName
+                  << std::endl;
 
         LogicalDevice logical_device{ physical_device };
         std::cout << "Logical device created." << std::endl;
@@ -122,7 +126,10 @@ int main() {
 
         // Load assets from glTF files specified in the manifest
         std::cout << "Loading meshes..." << std::endl;
-        load_meshes("main.meshes", mesh_registry, material_registry, texture_registry);
+        load_meshes("main.meshes",
+                    mesh_registry,
+                    material_registry,
+                    texture_registry);
 
         // Load standalone textures for overrides
         std::cout << "Loading textures..." << std::endl;
@@ -135,36 +142,52 @@ int main() {
         engine.add_system(std::make_unique<ecs::njMovementSystem>());
         engine.add_system(std::make_unique<ecs::njPhysicsSystem>());
         core::RenderBuffer render_buffer{};
-        engine.add_system(std::make_unique<ecs::njRenderSystem>(render_buffer, mesh_registry, material_registry, texture_registry));
+        engine
+        .add_system(std::make_unique<ecs::njRenderSystem>(render_buffer,
+                                                          mesh_registry,
+                                                          material_registry,
+                                                          texture_registry));
 
         // Load scene from configuration file
-        ecs::njSceneLoader scene_loader{ "main.scene", mesh_registry, material_registry, texture_registry };
+        ecs::njSceneLoader scene_loader{ "main.scene",
+                                         mesh_registry,
+                                         material_registry,
+                                         texture_registry };
         scene_loader.load(engine);
 
         // Generate a tile floor using RoomBuilder
         // TODO: Only ~10 of 25 tiles render visually - investigate rendering pipeline issue
-        mnt::RoomBuilder room_builder{ 5, math::njVec3f{-6.f, -2.f, 6.f}, "tile", mesh_registry };
-        auto tiles = room_builder.build();
-        for (auto& tile : tiles) {
-            engine.add_archetype(tile);
-        }
+        // Generate a tile floor using RoomBuilder
+        // TODO: Physics/Collision pending. Disabled for now to focus on other priorities.
+        // mnt::RoomBuilder room_builder{ 5, math::njVec3f{-6.f, -2.f, 6.f}, "tile", mesh_registry };
+        // auto tiles = room_builder.build();
+        // for (auto& tile : tiles) {
+        //     engine.add_archetype(tile);
+        // }
 
         auto start_time = std::chrono::high_resolution_clock::now();
         std::cout << "Entering main loop..." << std::endl;
 
         int frame_count = 0;
         while (should_run) {
-            if (frame_count++ % 100 == 0) std::cout << "Frame: " << frame_count << std::endl;
-            
-            auto camera_views = engine.get_view<njin::ecs::njTransformComponent, njin::ecs::njCameraComponent>();
+            if (frame_count++ % 100 == 0)
+                std::cout << "Frame: " << frame_count << std::endl;
+
+            auto camera_views = engine.get_view<njin::ecs::njTransformComponent,
+                                                njin::ecs::njCameraComponent>();
             if (camera_views.empty()) {
                 std::cerr << "No camera found!" << std::endl;
                 break;
             }
-            auto camera_transform_component = std::get<0>(camera_views[0].second);
+            auto camera_transform_component =
+            std::get<0>(camera_views[0].second);
 
             auto current_time = std::chrono::high_resolution_clock::now();
-            float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+            float time =
+            std::chrono::duration<float,
+                                  std::chrono::seconds::period>(current_time -
+                                                                start_time)
+            .count();
 
             float angle = time * 0.5f;  // Slower rotation
             float radius = 15.0f;
@@ -172,7 +195,8 @@ int main() {
             float new_z = radius * sin(angle);
 
             camera_transform_component->transform[0][3] = new_x;
-            camera_transform_component->transform[1][3] = 4.f;  // At model's mid-height
+            camera_transform_component->transform[1][3] =
+            4.f;  // At model's mid-height
             camera_transform_component->transform[2][3] = new_z;
 
             engine.update();

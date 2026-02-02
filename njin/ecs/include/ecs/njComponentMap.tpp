@@ -7,6 +7,9 @@ namespace njin::ecs {
 
     template<typename Component>
     Component* njComponentMap<Component>::get(EntityId entity) {
+        if (!map_.contains(entity)) {
+            return nullptr;
+        }
         return &map_.at(entity);
     }
 

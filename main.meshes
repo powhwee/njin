@@ -2,11 +2,11 @@
     "meshes" : [
         {
             "name": "cube",
-            "path": "mesh/stitch_free.glb"
+            "path": "mesh/cube.glb"
         } ,
         {
             "name": "player",
-            "path": "mesh/cube.glb"
+            "path": "mesh/stitch_free.glb"
         },
         {
             "name": "tile",
