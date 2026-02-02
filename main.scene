@@ -22,7 +22,6 @@
       "archetype": "player",
       "mesh_alias": "player",
       "position": [0.0, 1.0, 0.0],
-      "rotation_x_degrees": -90.0,
       "physics": {
         "mass": 1.0,
         "type": "dynamic"

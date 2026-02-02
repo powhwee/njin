@@ -1,0 +1,25 @@
+MSBuild version 18.0.5+e22287bf1 for .NET Framework
+
+  math.vcxproj -> C:\Users\pow_h\njin\build\njin\math\Debug\math.lib
+  vulkan.vcxproj -> C:\Users\pow_h\njin\build\njin\vulkan\Debug\vulkan.lib
+  GLTFAsset.cpp
+  util.vcxproj -> C:\Users\pow_h\njin\build\njin\util\Debug\util.lib
+  loader.cpp
+  core.vcxproj -> C:\Users\pow_h\njin\build\njin\core\Debug\core.lib
+  core_test.vcxproj -> C:\Users\pow_h\njin\build\njin\core\core_test.dir\Debug\core_test.lib
+  physics_system.vcxproj -> C:\Users\pow_h\njin\build\njin\ecs\physics\Debug\physics_system.lib
+  ecs.vcxproj -> C:\Users\pow_h\njin\build\njin\ecs\Debug\ecs.lib
+  ecs_test.vcxproj -> C:\Users\pow_h\njin\build\njin\ecs\ecs_test.dir\Debug\ecs_test.lib
+  math_test.vcxproj -> C:\Users\pow_h\njin\build\njin\math\math_test.dir\Debug\math_test.lib
+  physics_system_test.vcxproj -> C:\Users\pow_h\njin\build\njin\ecs\physics\physics_system_test.dir\Debug\physics_system_test.lib
+  runtime.vcxproj -> C:\Users\pow_h\njin\build\njin\runtime\Debug\runtime.lib
+  runtime_test.vcxproj -> C:\Users\pow_h\njin\build\njin\runtime\runtime_test.dir\Debug\runtime_test.lib
+  util_test.vcxproj -> C:\Users\pow_h\njin\build\njin\util\util_test.dir\Debug\util_test.lib
+  dev.vcxproj -> C:\Users\pow_h\njin\dist\Debug\dev.exe
+  mnt.vcxproj -> C:\Users\pow_h\njin\build\njin\mnt\Debug\mnt.lib
+  Copying C:/Users/pow_h/njin/mesh to C:/Users/pow_h/njin/mesh
+  Copying C:/Users/pow_h/njin/schema to C:/Users/pow_h/njin/dist
+   Copying C:/Users/pow_h/njin/texture to C:/Users/pow_h/njin/dist
+LINK : fatal error LNK1168: cannot open C:\Users\pow_h\njin\dist\Debug\njin.exe for writing [C:\Users\pow_h\njin\build\njin\njin.vcxproj]
+  Copying C:/Users/pow_h/njin/test_input to C:/Users/pow_h/njin/dist
+  test.vcxproj -> C:\Users\pow_h\njin\dist\test\Debug\test.exe
