@@ -39,16 +39,16 @@ void main() {
         base_color = vec3(pc.base_color_r, pc.base_color_g, pc.base_color_b);
     }
 
-    // Light sources - reduced intensity for better color preservation
+    // Multiple directional lights
     vec3 light_dirs[3];
     light_dirs[0] = normalize(vec3(1.0, 1.0, 1.0));
-    light_dirs[1] = normalize(vec3(-1.0, 1.0, -1.0));
-    light_dirs[2] = normalize(vec3(1.0, -1.0, -1.0));
+    light_dirs[1] = normalize(vec3(-1.0, 0.5, -0.5));
+    light_dirs[2] = normalize(vec3(0.0, -1.0, 0.5));
 
     vec3 light_colors[3];
-    light_colors[0] = vec3(0.6); // reduced from 1.0
-    light_colors[1] = vec3(0.4); // reduced from 0.7
-    light_colors[2] = vec3(0.2); // reduced from 0.3
+    light_colors[0] = vec3(0.6);  // Main light
+    light_colors[1] = vec3(0.3);  // Fill light
+    light_colors[2] = vec3(0.15); // Back light
 
     vec3 total_diffuse = vec3(0.0);
     vec3 total_specular = vec3(0.0);
@@ -58,31 +58,19 @@ void main() {
         float diff = max(dot(N, light_dirs[i]), 0.0);
         total_diffuse += diff * light_colors[i];
 
-        // Specular - reduced
-        float specular_strength = 0.3;
-        vec3 reflect_dir = reflect(-light_dirs[i], N);
-        float spec = pow(max(dot(view_dir, reflect_dir), 0.0), 32);
-        total_specular += specular_strength * spec * light_colors[i];
+        // Specular (Blinn-Phong)
+        vec3 halfway = normalize(light_dirs[i] + view_dir);
+        float spec = pow(max(dot(N, halfway), 0.0), 32.0);
+        total_specular += spec * light_colors[i] * 0.2;
     }
 
-    // Rim lighting - reduced
-    float rim_power = 4.0;
-    float rim_amount = 1.0 - max(dot(view_dir, N), 0.0);
-    float rim = pow(rim_amount, rim_power) * 0.15;
-    vec3 rim_color = vec3(1.0, 1.0, 1.0) * rim;
 
-    // Ambient - slightly increased to compensate for reduced direct lighting
-    float ambient_strength = 0.25;
-    vec3 ambient = ambient_strength * vec3(1.0);
 
-    vec3 result = (ambient + total_diffuse) * base_color + total_specular + rim_color;
+    // Ambient
+    float ambient = 0.2;
 
-    // Lighter tone mapping - preserve more color saturation
-    result = result / (result + vec3(0.5));
-
-    // Gamma correction
-    float gamma = 2.2;
-    result = pow(result, vec3(1.0/gamma));
+    // Combine (specular OK, rim causes issues)
+    vec3 result = (ambient + total_diffuse) * base_color + total_specular;
 
     out_color = vec4(result, frag_color.a);
 }
