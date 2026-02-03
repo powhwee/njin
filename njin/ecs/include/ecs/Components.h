@@ -25,7 +25,8 @@ namespace njin::ecs {
     struct njTransformComponent {
         static njTransformComponent make(float x, float y, float z) {
             // Use the Translation constructor for proper initialization
-            math::njMat4f mat{ math::njMat4Type::Translation, math::njVec3f{x, y, z} };
+            math::njMat4f mat{ math::njMat4Type::Translation,
+                               math::njVec3f{ x, y, z } };
             return { .transform = mat };
         }
 
@@ -50,8 +51,9 @@ namespace njin::ecs {
      * Mesh data
      */
     struct njMeshComponent {
-        std::string mesh;               // name of mesh
-        std::string texture_override;   // name of texture to override the default one
+        std::string mesh;  // name of mesh
+        std::string
+        texture_override;  // name of texture to override the default one
     };
 
     /**
@@ -65,6 +67,7 @@ namespace njin::ecs {
     enum class njCameraType {
         Perspective,
         Orthographic,
+        Isometric,  // Orthographic + fixed camera angle
     };
 
     /**

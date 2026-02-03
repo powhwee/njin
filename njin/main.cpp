@@ -181,23 +181,91 @@ int main() {
             }
             auto camera_transform_component =
             std::get<0>(camera_views[0].second);
+            auto camera_component = std::get<1>(camera_views[0].second);
 
-            auto current_time = std::chrono::high_resolution_clock::now();
-            float time =
-            std::chrono::duration<float,
-                                  std::chrono::seconds::period>(current_time -
-                                                                start_time)
-            .count();
+            // Handle projection toggle (P key for Perspective, O for Orthographic, I for Isometric)
+            static bool p_key_was_pressed = false;
+            static bool o_key_was_pressed = false;
+            static bool i_key_was_pressed = false;
+            const bool* keyboard_state = SDL_GetKeyboardState(nullptr);
 
-            float angle = time * 0.5f;  // Slower rotation
-            float radius = 15.0f;
-            float new_x = radius * cos(angle);
-            float new_z = radius * sin(angle);
+            bool p_key_pressed = keyboard_state[SDL_SCANCODE_P];
+            bool o_key_pressed = keyboard_state[SDL_SCANCODE_O];
+            bool i_key_pressed = keyboard_state[SDL_SCANCODE_I];
 
-            camera_transform_component->transform[0][3] = new_x;
-            camera_transform_component->transform[1][3] =
-            4.f;  // At model's mid-height
-            camera_transform_component->transform[2][3] = new_z;
+            // P key -> Perspective
+            if (p_key_pressed && !p_key_was_pressed) {
+                camera_component->type = njin::ecs::njCameraType::Perspective;
+                camera_component->settings =
+                njin::ecs::PerspectiveCameraSettings{ .near = 0.1f,
+                                                      .far = 100.f,
+                                                      .horizontal_fov = 70.f };
+                std::cout
+                << "Switched to PERSPECTIVE projection (orbiting camera)"
+                << std::endl;
+            }
+            p_key_was_pressed = p_key_pressed;
+
+            // O key -> Orthographic
+            if (o_key_pressed && !o_key_was_pressed) {
+                camera_component->type = njin::ecs::njCameraType::Orthographic;
+                camera_component->settings =
+                njin::ecs::OrthographicCameraSettings{ .near = 0.1f,
+                                                       .far = 100.f,
+                                                       .scale = 10.0f };
+                std::cout
+                << "Switched to ORTHOGRAPHIC projection (orbiting camera)"
+                << std::endl;
+            }
+            o_key_was_pressed = o_key_pressed;
+
+            // I key -> Isometric (fixed camera angle)
+            if (i_key_pressed && !i_key_was_pressed) {
+                camera_component->type = njin::ecs::njCameraType::Isometric;
+                camera_component->settings =
+                njin::ecs::OrthographicCameraSettings{ .near = 0.1f,
+                                                       .far = 100.f,
+                                                       .scale = 10.0f };
+                std::cout << "Switched to ISOMETRIC projection (fixed camera)"
+                          << std::endl;
+            }
+            i_key_was_pressed = i_key_pressed;
+
+            // Camera positioning: orbit for perspective/ortho, fixed for isometric
+            if (camera_component->type == njin::ecs::njCameraType::Isometric) {
+                // Classic isometric angle: 45° azimuth, ~35.264° elevation (arctan(1/√2))
+                constexpr float iso_radius = 20.0f;
+                constexpr float iso_elevation =
+                0.615479708f;  // arctan(1/√2) in radians ≈ 35.264°
+                constexpr float iso_azimuth = 0.785398163f;  // 45° in radians
+
+                float cam_x = iso_radius * cos(iso_elevation) *
+                              cos(iso_azimuth);
+                float cam_y = iso_radius * sin(iso_elevation);
+                float cam_z = iso_radius * cos(iso_elevation) *
+                              sin(iso_azimuth);
+
+                camera_transform_component->transform[0][3] = cam_x;
+                camera_transform_component->transform[1][3] = cam_y;
+                camera_transform_component->transform[2][3] = cam_z;
+            } else {
+                // Orbiting camera for perspective and orthographic
+                auto current_time = std::chrono::high_resolution_clock::now();
+                float time =
+                std::chrono::duration<float, std::chrono::seconds::period>(
+                current_time - start_time)
+                .count();
+
+                float angle = time * 0.5f;  // Slower rotation
+                float radius = 15.0f;
+                float new_x = radius * cos(angle);
+                float new_z = radius * sin(angle);
+
+                camera_transform_component->transform[0][3] = new_x;
+                camera_transform_component->transform[1][3] =
+                4.f;  // At model's mid-height
+                camera_transform_component->transform[2][3] = new_z;
+            }
 
             engine.update();
             vulkan::RenderInfos render_queue{ mesh_registry,

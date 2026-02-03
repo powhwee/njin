@@ -84,7 +84,9 @@ namespace njin::ecs {
                          { 0, (2 * n) / (b - t), (2 * b) / (b - t) - 1, 0 },
                          { 0, 0, f / (n - f), (n * f) / (n - f) },
                          { 0, 0, -1, 0 } };
-            } else if (camera.type == njCameraType::Orthographic) {
+            } else if (camera.type == njCameraType::Orthographic ||
+                       camera.type == njCameraType::Isometric) {
+                // Both Orthographic and Isometric use orthographic projection
                 auto settings{
                     std::get<OrthographicCameraSettings>(camera.settings)
                 };

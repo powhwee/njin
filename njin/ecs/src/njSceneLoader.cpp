@@ -60,15 +60,49 @@ namespace njin::ecs {
             std::string name = cam.HasMember("name") ? cam["name"].GetString() :
                                                        "camera";
 
-            ecs::PerspectiveCameraSettings settings{ .near = near_plane,
-                                                     .far = far_plane,
-                                                     .horizontal_fov = fov };
+            // Parse camera type (default: perspective)
+            std::string type_str = cam.HasMember("type") ?
+                                   cam["type"].GetString() :
+                                   "perspective";
+            ecs::njCameraType camera_type;
+            if (type_str == "orthographic") {
+                camera_type = ecs::njCameraType::Orthographic;
+            } else if (type_str == "isometric") {
+                camera_type = ecs::njCameraType::Isometric;
+            } else {
+                camera_type = ecs::njCameraType::Perspective;
+            }
+
+            // Create appropriate settings based on type
+            // Note: Isometric uses orthographic projection settings
+            std::variant<ecs::PerspectiveCameraSettings,
+                         ecs::OrthographicCameraSettings>
+            settings;
+            if (camera_type == ecs::njCameraType::Orthographic ||
+                camera_type == ecs::njCameraType::Isometric) {
+                float scale = cam.HasMember("scale") ? cam["scale"].GetFloat() :
+                                                       10.0f;
+                settings = ecs::OrthographicCameraSettings{ .near = near_plane,
+                                                            .far = far_plane,
+                                                            .scale = scale };
+                std::cout << "Camera type: " << type_str << " (scale=" << scale
+                          << ")" << std::endl;
+            } else {
+                settings = ecs::PerspectiveCameraSettings{
+                    .near = near_plane,
+                    .far = far_plane,
+                    .horizontal_fov = fov
+                };
+                std::cout << "Camera type: perspective (fov=" << fov << ")"
+                          << std::endl;
+            }
+
             ecs::njCameraArchetypeCreateInfo camera_info{
                 .name = name,
                 .transform = ecs::njTransformComponent::make(pos_x,
                                                              pos_y,
                                                              pos_z),
-                .camera = { .type = ecs::njCameraType::Perspective,
+                .camera = { .type = camera_type,
                             .up = { up_x, up_y, up_z },
                             .look_at = { look_x, look_y, look_z },
                             .aspect = aspect,
