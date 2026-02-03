@@ -111,7 +111,8 @@ namespace njin::ecs {
                     math::njMat4Type::Translation,
                     math::njVec3f{ pos_x, pos_y, pos_z }
                 };
-                math::njMat4f final_transform = translation;
+                math::njMat4f rotation = math::njMat4f::Identity();
+                math::njMat4f scale = math::njMat4f::Identity();
 
                 if (entity.HasMember("rotation_x_degrees")) {
                     float angle_x = entity["rotation_x_degrees"].GetFloat() *
@@ -121,9 +122,28 @@ namespace njin::ecs {
                                           0.f,
                                           0.f,
                                           std::cos(half_x) };
-                    math::njMat4f rotation_x{ quat_x };
-                    final_transform = translation * rotation_x;
+                    rotation = math::njMat4f{ quat_x };
                 }
+
+                // Parse optional scale (uniform or per-axis)
+                if (entity.HasMember("scale")) {
+                    float scale_x = 1.f, scale_y = 1.f, scale_z = 1.f;
+                    if (entity["scale"].IsArray()) {
+                        scale_x = entity["scale"][0].GetFloat();
+                        scale_y = entity["scale"][1].GetFloat();
+                        scale_z = entity["scale"][2].GetFloat();
+                    } else if (entity["scale"].IsNumber()) {
+                        scale_x = scale_y = scale_z =
+                        entity["scale"].GetFloat();
+                    }
+                    scale = math::njMat4f{
+                        math::njMat4Type::Scale,
+                        math::njVec3f{ scale_x, scale_y, scale_z }
+                    };
+                }
+
+                // Final transform: Translation × Rotation × Scale
+                math::njMat4f final_transform = translation * rotation * scale;
 
                 if (archetype_type == "player") {
                     // Player archetype with physics

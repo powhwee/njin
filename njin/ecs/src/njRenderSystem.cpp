@@ -249,7 +249,6 @@ namespace njin::ecs {
 
             const auto* mesh_data = mesh_registry_->get(mesh_component->mesh);
             if (!mesh_data) {
-                // Silent skip or debug log
                 continue;
             }
 

@@ -219,8 +219,12 @@ namespace njin::ecs {
             float new_x{ t.x + v_x * DT + 0.5f * a_x * DT * DT };
             float new_y{ t.y + v_y * DT + 0.5f * a_y * DT * DT };
             float new_z{ t.z + v_z * DT + 0.5f * a_z * DT * DT };
-            math::njMat4f new_transform{ math::njMat4Type::Translation,
-                                         { new_x, new_y, new_z } };
+
+            // Preserve rotation/scale from original transform, only update translation
+            math::njMat4f new_transform = global_transform;
+            new_transform[0][3] = new_x;  // Set translation X
+            new_transform[1][3] = new_y;  // Set translation Y
+            new_transform[2][3] = new_z;  // Set translation Z
 
             entity_to_transform_[entity] = new_transform;
 

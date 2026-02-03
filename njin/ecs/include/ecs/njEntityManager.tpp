@@ -237,6 +237,18 @@ namespace njin::ecs {
             get_component_map<Component>()...
         };
 
+        // If any component type has never been registered, return a view
+        // with null pointers for all components
+        bool any_null{ std::apply(
+        [](njComponentMap<Component>*... m) { return ((m == nullptr) || ...); },
+        maps) };
+        if (any_null) {
+            std::tuple<Component*...> null_components{
+                static_cast<Component*>(nullptr)...
+            };
+            return { entity, null_components };
+        }
+
         View<Component...> view{ std::apply(
         [entity](njComponentMap<Component>*... map) -> View<Component...> {
             std::tuple<Component*...> components{
