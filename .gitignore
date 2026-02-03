@@ -10,3 +10,10 @@ build/
 
 # ide configurations
 .idea/
+
+# log files
+output.txt
+debug.txt
+
+# compiled shaders
+*.spv
