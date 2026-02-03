@@ -6,7 +6,7 @@
         } ,
         {
             "name": "player",
-            "path": "mesh/stitch_free.glb"
+            "path": "mesh/dog_puppy.glb"
         },
         {
             "name": "tile",
