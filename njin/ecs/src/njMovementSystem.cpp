@@ -43,7 +43,9 @@ namespace njin::ecs {
             math::njVec3f direction{ calculate_direction(*input) };
 
             // directly override the velocity
-            intent->velocity = direction;
+            constexpr float MOVEMENT_SPEED{ 5.0f };  // units per second
+            intent->velocity = direction * MOVEMENT_SPEED;
+            intent->velocity_override = true;
         }
     }
 
