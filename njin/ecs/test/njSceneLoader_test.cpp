@@ -1,44 +1,54 @@
-#include <catch2/catch_test_macros.hpp>
 #include "ecs/njSceneLoader.h"
+
+#include <cstdio>
+#include <fstream>
+
+#include <catch2/catch_test_macros.hpp>
+
+#include "core/njAnimation.h"
+#include "core/njMesh.h"
+#include "core/njRegistry.h"
+#include "core/njSkeleton.h"
+#include "ecs/Components.h"
 #include "ecs/njEngine.h"
 #include "ecs/njObjectArchetype.h"
 #include "ecs/njPlayerArchetype.h"
-#include "ecs/Components.h"
-#include "core/njRegistry.h"
-#include "core/njMesh.h"
 #include "util/json.h"
-#include <fstream>
-#include <cstdio>
 
 namespace njin::ecs {
 
-// RAII helper to clean up test files
-struct TestFileGuard {
-    std::string path;
-    ~TestFileGuard() { std::remove(path.c_str()); }
-};
+    // RAII helper to clean up test files
+    struct TestFileGuard {
+        std::string path;
 
-TEST_CASE("njSceneLoader", "[ecs][scene_loader]") {
-    // Setup registries
-    core::njRegistry<core::njMesh> mesh_registry;
-    core::njRegistry<core::njMaterial> material_registry;
-    core::njRegistry<core::njTexture> texture_registry;
-    
-    // Add dummy meshes
-    core::njMesh cube_mesh;
-    cube_mesh.name = "cube";
-    mesh_registry.add("cube-Object_0", std::move(cube_mesh));
-    
-    core::njMesh player_mesh;
-    player_mesh.name = "player";
-    mesh_registry.add("player-Cube", std::move(player_mesh));
+        ~TestFileGuard() {
+            std::remove(path.c_str());
+        }
+    };
 
-    SECTION("load full scene creates all entities") {
-        std::string scene_path = "test_full_scene.json";
-        TestFileGuard guard{scene_path};
-        
-        std::ofstream file(scene_path);
-        file << R"({
+    TEST_CASE("njSceneLoader", "[ecs][scene_loader]") {
+        // Setup registries
+        core::njRegistry<core::njMesh> mesh_registry;
+        core::njRegistry<core::njMaterial> material_registry;
+        core::njRegistry<core::njTexture> texture_registry;
+        core::njRegistry<core::njSkeleton> skeleton_registry;
+        core::njRegistry<std::vector<core::njAnimation>> animation_registry;
+
+        // Add dummy meshes
+        core::njMesh cube_mesh;
+        cube_mesh.name = "cube";
+        mesh_registry.add("cube-Object_0", std::move(cube_mesh));
+
+        core::njMesh player_mesh;
+        player_mesh.name = "player";
+        mesh_registry.add("player-Cube", std::move(player_mesh));
+
+        SECTION("load full scene creates all entities") {
+            std::string scene_path = "test_full_scene.json";
+            TestFileGuard guard{ scene_path };
+
+            std::ofstream file(scene_path);
+            file << R"({
             "camera": {
                 "name": "main_camera",
                 "position": [0, 5, 10],
@@ -63,62 +73,74 @@ TEST_CASE("njSceneLoader", "[ecs][scene_loader]") {
                 }
             ]
         })";
-        file.close();
+            file.close();
 
-        njEngine engine;
-        njSceneLoader loader(scene_path, mesh_registry, material_registry, texture_registry);
-        
-        REQUIRE_NOTHROW(loader.load(engine));
+            njEngine engine;
+            njSceneLoader loader(scene_path,
+                                 mesh_registry,
+                                 material_registry,
+                                 texture_registry,
+                                 skeleton_registry,
+                                 animation_registry);
 
-        // Verify camera created
-        auto camera_views = engine.get_view<njCameraComponent>();
-        REQUIRE(camera_views.size() == 1);
-        
-        // Verify player created (has transform, mesh, input, physics)
-        auto player_views = engine.get_view<njTransformComponent, njInputComponent, njPhysicsComponent>();
-        REQUIRE(player_views.size() == 1);
-        
-        auto [transform, input, physics] = player_views[0].second;
-        REQUIRE(physics->mass == 10.0f);
-        REQUIRE(physics->type == RigidBodyType::Dynamic);
+            REQUIRE_NOTHROW(loader.load(engine));
 
-        // Verify mesh count (player + cube = 2)
-        auto mesh_views = engine.get_view<njMeshComponent>();
-        REQUIRE(mesh_views.size() == 2);
-    }
-    
-    SECTION("load camera-only scene") {
-        std::string scene_path = "test_camera_only.json";
-        TestFileGuard guard{scene_path};
-        
-        std::ofstream file(scene_path);
-        file << R"({
+            // Verify camera created
+            auto camera_views = engine.get_view<njCameraComponent>();
+            REQUIRE(camera_views.size() == 1);
+
+            // Verify player created (has transform, mesh, input, physics)
+            auto player_views = engine.get_view<njTransformComponent,
+                                                njInputComponent,
+                                                njPhysicsComponent>();
+            REQUIRE(player_views.size() == 1);
+
+            auto [transform, input, physics] = player_views[0].second;
+            REQUIRE(physics->mass == 10.0f);
+            REQUIRE(physics->type == RigidBodyType::Dynamic);
+
+            // Verify mesh count (player + cube = 2)
+            auto mesh_views = engine.get_view<njMeshComponent>();
+            REQUIRE(mesh_views.size() == 2);
+        }
+
+        SECTION("load camera-only scene") {
+            std::string scene_path = "test_camera_only.json";
+            TestFileGuard guard{ scene_path };
+
+            std::ofstream file(scene_path);
+            file << R"({
             "camera": {
                 "name": "solo_camera",
                 "position": [0, 10, 0],
                 "look_at": [0, 0, 0]
             }
         })";
-        file.close();
+            file.close();
 
-        njEngine engine;
-        njSceneLoader loader(scene_path, mesh_registry, material_registry, texture_registry);
-        
-        REQUIRE_NOTHROW(loader.load(engine));
+            njEngine engine;
+            njSceneLoader loader(scene_path,
+                                 mesh_registry,
+                                 material_registry,
+                                 texture_registry,
+                                 skeleton_registry,
+                                 animation_registry);
 
-        auto camera_views = engine.get_view<njCameraComponent>();
-        REQUIRE(camera_views.size() == 1);
-        
-        auto mesh_views = engine.get_view<njMeshComponent>();
-        REQUIRE(mesh_views.size() == 0);
-    }
-    
-    SECTION("load scene with empty entities array") {
-        std::string scene_path = "test_empty_entities.json";
-        TestFileGuard guard{scene_path};
-        
-        std::ofstream file(scene_path);
-        file << R"({
+            REQUIRE_NOTHROW(loader.load(engine));
+
+            auto camera_views = engine.get_view<njCameraComponent>();
+            REQUIRE(camera_views.size() == 1);
+
+            auto mesh_views = engine.get_view<njMeshComponent>();
+            REQUIRE(mesh_views.size() == 0);
+        }
+
+        SECTION("load scene with empty entities array") {
+            std::string scene_path = "test_empty_entities.json";
+            TestFileGuard guard{ scene_path };
+
+            std::ofstream file(scene_path);
+            file << R"({
             "camera": {
                 "name": "empty_scene_camera",
                 "position": [0, 5, 10],
@@ -126,19 +148,24 @@ TEST_CASE("njSceneLoader", "[ecs][scene_loader]") {
             },
             "entities": []
         })";
-        file.close();
+            file.close();
 
-        njEngine engine;
-        njSceneLoader loader(scene_path, mesh_registry, material_registry, texture_registry);
-        
-        REQUIRE_NOTHROW(loader.load(engine));
+            njEngine engine;
+            njSceneLoader loader(scene_path,
+                                 mesh_registry,
+                                 material_registry,
+                                 texture_registry,
+                                 skeleton_registry,
+                                 animation_registry);
 
-        auto camera_views = engine.get_view<njCameraComponent>();
-        REQUIRE(camera_views.size() == 1);
-        
-        auto mesh_views = engine.get_view<njMeshComponent>();
-        REQUIRE(mesh_views.size() == 0);
+            REQUIRE_NOTHROW(loader.load(engine));
+
+            auto camera_views = engine.get_view<njCameraComponent>();
+            REQUIRE(camera_views.size() == 1);
+
+            auto mesh_views = engine.get_view<njMeshComponent>();
+            REQUIRE(mesh_views.size() == 0);
+        }
     }
-}
 
 }  // namespace njin::ecs

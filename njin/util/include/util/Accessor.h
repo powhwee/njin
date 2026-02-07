@@ -91,6 +91,15 @@ namespace njin::gltf {
         std::vector<uint16_t> get_scalar() const;
 
         /**
+         * Retrieve all elements the accessor references as an array of float
+         * Used for animation keyframe times
+         * @return Array of float scalars
+         * @note User is responsible for ensuring the type and component type
+         * of this accessor are "SCALAR" and "FLOAT"
+         */
+        std::vector<float> get_scalar_f() const;
+
+        /**
          * Retrieve all elements the accessor references as an array of uint32_t
          * This is most commonly used to get the result of the indices accessor
          * @return Array of scalars
@@ -99,13 +108,31 @@ namespace njin::gltf {
          */
         std::vector<uint32_t> get_scalar_u32() const;
 
+        /**
+         * Retrieve all elements as an array of njMat4f
+         * Used for inverse bind matrices in skin data
+         * @return Array of njMat4f elements
+         * @note Transposes from column-major (glTF) to row-major (njMat4)
+         */
+        std::vector<math::njMat4f> get_mat4f() const;
+
+        /**
+         * Retrieve all elements as an array of njVec4<uint16_t>
+         * Handles UNSIGNED_BYTE component type by promoting to uint16
+         * Used for JOINTS_0 when stored as uint8
+         * @return Array of njVec4<uint16_t> elements
+         */
+        std::vector<math::njVec4<uint16_t>> get_vec4_ubyte() const;
+
         private:
         using Element = std::variant<uint16_t,
                                      uint32_t,
+                                     float,
                                      math::njVec2f,
                                      math::njVec3f,
                                      math::njVec4f,
-                                     math::njVec4<uint16_t>>;
+                                     math::njVec4<uint16_t>,
+                                     math::njMat4f>;
         const std::vector<Element> elements_{};
     };
 

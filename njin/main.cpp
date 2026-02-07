@@ -15,6 +15,8 @@
 #include "core/loader.h"
 #include "core/njVertex.h"
 #include "ecs/Components.h"
+#include "ecs/njAnimationInputSystem.h"
+#include "ecs/njAnimationSystem.h"
 #include "ecs/njArchetype.h"
 #include "ecs/njCameraArchetype.h"
 #include "ecs/njEngine.h"
@@ -123,13 +125,17 @@ int main() {
         core::njRegistry<core::njMesh> mesh_registry{};
         core::njRegistry<core::njMaterial> material_registry{};
         core::njRegistry<core::njTexture> texture_registry{};
+        core::njRegistry<core::njSkeleton> skeleton_registry{};
+        core::njRegistry<std::vector<core::njAnimation>> animation_registry{};
 
         // Load assets from glTF files specified in the manifest
         std::cout << "Loading meshes..." << std::endl;
         load_meshes("main.meshes",
                     mesh_registry,
                     material_registry,
-                    texture_registry);
+                    texture_registry,
+                    skeleton_registry,
+                    animation_registry);
 
         // Load standalone textures for overrides
         std::cout << "Loading textures..." << std::endl;
@@ -148,11 +154,17 @@ int main() {
                                                           material_registry,
                                                           texture_registry));
 
+        // Create animation input system
+        engine.add_system(std::make_unique<ecs::njAnimationInputSystem>());
+        // Create animation system
+        float delta_time = 0.016f;  // ~60fps default
+        engine.add_system(std::make_unique<ecs::njAnimationSystem>(delta_time));
+
         // Load scene from configuration file
-        ecs::njSceneLoader scene_loader{ "main.scene",
-                                         mesh_registry,
-                                         material_registry,
-                                         texture_registry };
+        ecs::njSceneLoader scene_loader{
+            "main.scene",     mesh_registry,     material_registry,
+            texture_registry, skeleton_registry, animation_registry
+        };
         scene_loader.load(engine);
 
         // Generate a tile floor using RoomBuilder
@@ -169,7 +181,15 @@ int main() {
         std::cout << "Entering main loop..." << std::endl;
 
         int frame_count = 0;
+        auto last_frame_time = std::chrono::high_resolution_clock::now();
         while (should_run) {
+            // Compute delta time
+            auto current_frame_time = std::chrono::high_resolution_clock::now();
+            delta_time = std::chrono::duration<float>(current_frame_time -
+                                                      last_frame_time)
+                         .count();
+            last_frame_time = current_frame_time;
+
             if (frame_count++ % 100 == 0)
                 std::cout << "Frame: " << frame_count << std::endl;
 
@@ -249,14 +269,8 @@ int main() {
                 camera_transform_component->transform[1][3] = cam_y;
                 camera_transform_component->transform[2][3] = cam_z;
             } else {
-                // Orbiting camera for perspective and orthographic
-                auto current_time = std::chrono::high_resolution_clock::now();
-                float time =
-                std::chrono::duration<float, std::chrono::seconds::period>(
-                current_time - start_time)
-                .count();
-
-                float angle = time * 0.5f;  // Slower rotation
+                // Static camera (orbit disabled for animation debugging)
+                float angle = 0.0f;  // Fixed angle
                 float radius = 15.0f;
                 float new_x = radius * cos(angle);
                 float new_z = radius * sin(angle);

@@ -1,4 +1,3 @@
-
 # Packages
 find_package(Vulkan REQUIRED)
 find_package(Stb REQUIRED)

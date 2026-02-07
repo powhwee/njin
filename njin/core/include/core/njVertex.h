@@ -15,6 +15,8 @@ namespace njin::core {
         std::optional<math::njVec3f> normal{};
         std::optional<math::njVec4f> tangent{};
         std::optional<math::njVec2f> tex_coord{};
+        std::optional<math::njVec4<uint16_t>> joints{};
+        std::optional<math::njVec4f> weights{};
     };
 
     /**
@@ -52,6 +54,8 @@ namespace njin::core {
         math::njVec4f tangent{};
         math::njVec2f tex_coord{};
         math::njVec4<uint16_t> color{};
+        math::njVec4<uint16_t> joints{};  // JOINTS_0: 4 joint indices
+        math::njVec4f weights{};          // WEIGHTS_0: 4 joint weights
     };
 
     static_assert(std::is_standard_layout_v<njVertex>,

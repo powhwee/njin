@@ -68,7 +68,7 @@ namespace njin::vulkan {
             if (render_info.type == RenderType::Mesh) {
                 auto info{ std::get<MeshRenderInfo>(render_info.info) };
 
-                // Push model index, texture index, and base color
+                // Push model index, texture index, base color, and joint skinning info
                 struct PushConstants {
                     int32_t model_index;
                     int32_t texture_index;
@@ -76,18 +76,21 @@ namespace njin::vulkan {
                     float base_color_g;
                     float base_color_b;
                     float base_color_a;
-                } pc{ 
-                    static_cast<int32_t>(info.model_index), 
-                    info.texture_index,
-                    info.base_color_r,
-                    info.base_color_g,
-                    info.base_color_b,
-                    info.base_color_a
-                };
-                
+                    int32_t joint_offset;
+                    int32_t joint_count;
+                } pc{ static_cast<int32_t>(info.model_index),
+                      info.texture_index,
+                      info.base_color_r,
+                      info.base_color_g,
+                      info.base_color_b,
+                      info.base_color_a,
+                      info.joint_offset,
+                      info.joint_count };
+
                 vkCmdPushConstants(command_buffer.get(),
                                    bind_set_.layout,
-                                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                   VK_SHADER_STAGE_VERTEX_BIT |
+                                   VK_SHADER_STAGE_FRAGMENT_BIT,
                                    0,
                                    sizeof(PushConstants),
                                    &pc);

@@ -155,7 +155,7 @@ namespace njin::vulkan {
         render_buffer_{ &render_buffer } {
         // Process textures first to populate texture_indices_
         process_textures(render_resources, texture_registry);
-        
+
         write_data(mesh_registry,
                    texture_registry,
                    render_resources,
@@ -182,6 +182,9 @@ namespace njin::vulkan {
         // serialize all the corresponding model matrices into an array
         std::vector<vulkan::MainDrawModel> model_matrices{};
 
+        // joint matrices for GPU skinning
+        std::vector<vulkan::MainDrawJoint> joint_matrices{};
+
         // serialize all the billboard quads of required meshes into an array
         std::vector<vulkan::IsoDrawVertex> iso_vertices{};
 
@@ -204,16 +207,18 @@ namespace njin::vulkan {
             if (renderable.type == RenderType::Mesh) {
                 main_draw_info.type = RenderType::Mesh;
                 iso_draw_info.type = RenderType::Billboard;
-                
+
                 auto data{ std::get<core::MeshData>(renderable.data) };
                 const core::njMesh* mesh = mesh_registry.get(data.mesh_name);
-                
+
                 if (!mesh) {
                     continue;  // Skip if mesh not found
                 }
 
-                for (const core::njPrimitive& primitive : mesh->get_primitives()) {
-                    for (const core::njVertex& vertex : primitive.get_vertices()) {
+                for (const core::njPrimitive& primitive :
+                     mesh->get_primitives()) {
+                    for (const core::njVertex& vertex :
+                         primitive.get_vertices()) {
                         vulkan::MainDrawVertex main_draw_vertex{
                             .x = vertex.position.x,
                             .y = vertex.position.y,
@@ -230,7 +235,15 @@ namespace njin::vulkan {
                             .r = vertex.color.x,
                             .g = vertex.color.y,
                             .b = vertex.color.z,
-                            .a = vertex.color.w
+                            .a = vertex.color.w,
+                            .j0 = vertex.joints.x,
+                            .j1 = vertex.joints.y,
+                            .j2 = vertex.joints.z,
+                            .j3 = vertex.joints.w,
+                            .w0 = vertex.weights.x,
+                            .w1 = vertex.weights.y,
+                            .w2 = vertex.weights.z,
+                            .w3 = vertex.weights.w
                         };
                         main_vertices.push_back(main_draw_vertex);
                     }
@@ -247,7 +260,20 @@ namespace njin::vulkan {
                             tex_idx = static_cast<int32_t>(it->second);
                         }
                     }
-                    
+
+                    // Joint matrices offset for skinned meshes
+                    int32_t joint_off = -1;
+                    int32_t joint_cnt = 0;
+                    if (data.is_skinned && !data.joint_matrices.empty()) {
+                        joint_off = static_cast<int32_t>(joint_matrices.size());
+                        joint_cnt =
+                        static_cast<int32_t>(data.joint_matrices.size());
+                        for (const auto& jm : data.joint_matrices) {
+                            joint_matrices.push_back(vulkan::MainDrawJoint{
+                                .joint = jm });
+                        }
+                    }
+
                     MeshRenderInfo mesh_info{
                         .model_index = current_model_index,
                         .texture_index = tex_idx,
@@ -255,9 +281,12 @@ namespace njin::vulkan {
                         .base_color_g = data.base_color_g,
                         .base_color_b = data.base_color_b,
                         .base_color_a = data.base_color_a,
-                        .vertex_offset = 0, 
+                        .vertex_offset = 0,
                         .first_index = current_index_offset,
-                        .index_count = static_cast<uint32_t>(primitive.get_indices().size())
+                        .index_count =
+                        static_cast<uint32_t>(primitive.get_indices().size()),
+                        .joint_offset = joint_off,
+                        .joint_count = joint_cnt
                     };
                     main_draw_info.info = mesh_info;
                     render_infos_.add(main_draw_info);
@@ -284,25 +313,33 @@ namespace njin::vulkan {
 
                 current_billboard_offset += 6;
 
-
                 vulkan::MainDrawModel main_draw_model{
                     .model = data.global_transform
                 };
                 model_matrices.push_back(main_draw_model);
-                
+
                 ++current_model_index;
             }
 
+            std::cerr << "[DEBUG] write model matrices ("
+                      << model_matrices.size() << ")" << std::endl;
             render_resources.descriptor_sets
             .write_descriptor_data("mvp", "model", model_matrices);
 
+            std::cerr << "[DEBUG] write view_projection" << std::endl;
             render_resources.descriptor_sets
             .write_descriptor_data("mvp", "view_projection", view_projection);
+
+            // Upload joint matrices if any skinned meshes exist
+            if (!joint_matrices.empty()) {
+                render_resources.descriptor_sets
+                .write_descriptor_data("mvp", "joints", joint_matrices);
+            }
 
             render_resources.vertex_buffers.load_into_buffer("main_draw",
                                                              main_vertices);
             render_resources.index_buffers.load_into_buffer("main_draw",
-                                                             main_indices);
+                                                            main_indices);
             // Note: iso_draw vertex buffer removed - using only 3D rendering
         }
     }

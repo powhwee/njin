@@ -1,7 +1,12 @@
 #pragma once
+#include <unordered_map>
 #include <variant>
 
+#include <SDL3/SDL_scancode.h>
+
+#include "core/njAnimation.h"
 #include "core/njMesh.h"
+#include "core/njSkeleton.h"
 #include "ecs/EngineTypes.h"
 #include "math/njMat4.h"
 
@@ -61,6 +66,50 @@ namespace njin::ecs {
      */
     struct njParentComponent {
         EntityId id;  // entity id of parent
+    };
+
+    /**
+     * Node in a skeleton hierarchy
+     */
+    struct njNodeComponent {
+        int node_index;  // index into skeleton
+        const core::njSkeleton*
+        skeleton;  // pointer to shared skeleton data (const)
+    };
+
+    /**
+     * Reference to the root entity that holds the animation state.
+     * Used by child mesh entities to look up the current pose.
+     */
+    struct njSkeletonRefComponent {
+        EntityId root_entity;
+        int node_index;
+    };
+
+    /**
+     * Animation playback state (Held only by the ROOT entity)
+     */
+    struct njAnimationComponent {
+        const std::vector<njin::core::njAnimation>* animations{ nullptr };
+        std::string current_animation;
+        float current_time{ 0.f };
+        float speed{ 1.f };
+        bool playing{ false };
+        bool loop{ true };
+
+        // current animated transforms (global relative to model root)
+        std::vector<math::njMat4f> pose;
+
+        // final joint matrices for GPU skinning:
+        // joint_matrix[j] = global_pose[joint_nodes[j]] * IBM[j]
+        std::vector<math::njMat4f> joint_matrices;
+    };
+
+    /**
+     * Input-to-animation bindings
+     */
+    struct njAnimationBindingsComponent {
+        std::unordered_map<SDL_Scancode, std::string> key_to_animation;
     };
 
     /// Camera ///

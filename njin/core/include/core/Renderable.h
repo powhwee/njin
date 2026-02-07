@@ -15,6 +15,10 @@ namespace njin::core {
         float base_color_g{ 1.0f };
         float base_color_b{ 1.0f };
         float base_color_a{ 1.0f };
+
+        // GPU skinning data
+        std::vector<math::njMat4f> joint_matrices;  // empty if not skinned
+        bool is_skinned{ false };
     };
 
     struct Renderable {

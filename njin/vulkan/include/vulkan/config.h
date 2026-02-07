@@ -19,6 +19,7 @@ namespace njin::vulkan {
    * of each entity
    */
     constexpr int MAX_OBJECTS = 1024;
+
     // TODO: MAX_OBJECTS=1024 uses 1024 descriptors (Option A). This likely breaks Mac/MoltenVK compatibility (limit ~31).
     // Future Refactor: Switch to Single SSBO (Option B) which uses 1 descriptor containing an array of matrices.
 
@@ -59,10 +60,31 @@ namespace njin::vulkan {
             sizeof(DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION_FORMAT) }
     };
 
+    // Joint matrices SSBO for GPU skinning
+    constexpr int MAX_JOINTS = 128;
+
+    struct DESCRIPTOR_SET_LAYOUT_BINDING_JOINTS_FORMAT {
+        math::njMat4f joint;
+    };
+
+    using MainDrawJoint = DESCRIPTOR_SET_LAYOUT_BINDING_JOINTS_FORMAT;
+
+    inline SetLayoutBindingInfo DESCRIPTOR_SET_LAYOUT_BINDING_JOINTS{
+        .name = "joints",
+        .binding = 2,
+        .descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .descriptor_count = MAX_JOINTS,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .extra_info =
+        SetLayoutBindingBufferInfo{
+            .size = sizeof(DESCRIPTOR_SET_LAYOUT_BINDING_JOINTS_FORMAT) }
+    };
+
     inline SetLayoutInfo DESCRIPTOR_SET_LAYOUT_INFO_MVP{
         "mvp",
         { DESCRIPTOR_SET_LAYOUT_BINDING_MODEL,
-          DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION }
+          DESCRIPTOR_SET_LAYOUT_BINDING_VIEW_PROJECTION,
+          DESCRIPTOR_SET_LAYOUT_BINDING_JOINTS }
     };
 
     /**
@@ -125,11 +147,11 @@ namespace njin::vulkan {
      * Main drawing pipeline
      */
 
-    // 24 bytes for model_index (4) + texture_index (4) + base_color (16)
+    // 32 bytes for model_index (4) + texture_index (4) + base_color (16) + joint_offset (4) + joint_count (4)
     inline VkPushConstantRange PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL{
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         .offset = 0,
-        .size = 24
+        .size = 32
     };
 
     inline ShaderStageInfo SHADER_STAGE_INFO_MAIN_DRAW_VERTEX{
@@ -172,6 +194,18 @@ namespace njin::vulkan {
         .format = VK_FORMAT_R16G16B16A16_UNORM,
         .offset = 48
     };
+    inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_JOINTS{
+        .name = "joints",
+        .location = 5,
+        .format = VK_FORMAT_R16G16B16A16_UINT,
+        .offset = 56
+    };
+    inline VertexAttributeInfo VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_WEIGHTS{
+        .name = "weights",
+        .location = 6,
+        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+        .offset = 64
+    };
 
     // data format for the vertex input of the main render pass - draw subpass
     struct VERTEX_INPUT_MAIN_DRAW_FORMAT {
@@ -180,18 +214,22 @@ namespace njin::vulkan {
         float tx, ty, tz, tw;
         float u, v;
         uint16_t r, g, b, a;
+        uint16_t j0, j1, j2, j3;  // joint indices
+        float w0, w1, w2, w3;     // joint weights
     };
 
     using MainDrawVertex = VERTEX_INPUT_MAIN_DRAW_FORMAT;
 
     inline VertexInputInfo VERTEX_INPUT_INFO_MAIN_DRAW{
         .name = "vertex",
-        .vertex_size = 56,
+        .vertex_size = 80,
         .attribute_infos = { VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_POSITION,
                              VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_NORMAL,
                              VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_TANGENT,
                              VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_TEX_COORD,
-                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_COLOR }
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_COLOR,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_JOINTS,
+                             VERTEX_ATTRIBUTE_INFO_MAIN_DRAW_WEIGHTS }
     };
     inline InputAssemblyInfo INPUT_ASSEMBLY_INFO_MAIN_DRAW{
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
@@ -231,7 +269,8 @@ namespace njin::vulkan {
     inline PipelineInfo PIPELINE_INFO_MAIN_DRAW{
         .render_pass = "main",
         .subpass = "draw",
-        .set_layouts = { "mvp", "textures" },  // Added textures for fragment shader
+        .set_layouts = { "mvp",
+                         "textures" },  // Added textures for fragment shader
         .push_constant_ranges = { PUSH_CONSTANT_RANGE_MAIN_DRAW_MODEL },
         .shader_stages = { SHADER_STAGE_INFO_MAIN_DRAW_VERTEX,
                            SHADER_STAGE_INFO_MAIN_DRAW_FRAGMENT },

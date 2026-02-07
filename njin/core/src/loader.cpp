@@ -11,7 +11,12 @@
 namespace rj = rapidjson;
 
 namespace njin::core {
-    void load_meshes(const std::string& path, njRegistry<njMesh>& mesh_registry, njRegistry<njMaterial>& material_registry, njRegistry<njTexture>& texture_registry) {
+    void load_meshes(const std::string& path,
+                     njRegistry<njMesh>& mesh_registry,
+                     njRegistry<njMaterial>& material_registry,
+                     njRegistry<njTexture>& texture_registry,
+                     njRegistry<njSkeleton>& skeleton_registry,
+                     njRegistry<std::vector<njAnimation>>& animation_registry) {
         // Check that the schema for the config is a valid json
         rj::Document document{
             njin::util::make_validated_document("schema/meshes.schema.json",
@@ -32,14 +37,23 @@ namespace njin::core {
 
             // Materials and textures are already prefixed with alias by GLTFAsset
             for (const auto& material : asset.get_materials()) {
-                std::cout << "Registered material: " << material.name << std::endl;
+                std::cout << "Registered material: " << material.name
+                          << std::endl;
                 material_registry.add(material.name, material);
             }
 
             for (const auto& texture : asset.get_textures()) {
-                std::cout << "Registered texture: " << texture.name << std::endl;
+                std::cout << "Registered texture: " << texture.name
+                          << std::endl;
                 texture_registry.add(texture.name, texture);
             }
+
+            // Register Skeleton and Animations
+            std::cout << "Registered skeleton: " << name << std::endl;
+            skeleton_registry.add(name, asset.get_skeleton());
+
+            std::cout << "Registered animations: " << name << std::endl;
+            animation_registry.add(name, asset.get_animations());
         }
     }
 

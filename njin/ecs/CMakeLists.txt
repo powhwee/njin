@@ -12,6 +12,8 @@ set(SOURCES
     physics/src/BVH.cpp
     physics/src/BVHNode.cpp
     src/njSceneLoader.cpp
+    src/njAnimationSystem.cpp
+    src/njAnimationInputSystem.cpp
 )
 
 add_subdirectory(physics)

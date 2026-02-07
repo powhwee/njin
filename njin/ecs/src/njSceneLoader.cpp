@@ -22,11 +22,16 @@ namespace njin::ecs {
     const std::string& scene_path,
     const njin::core::njRegistry<njin::core::njMesh>& mesh_registry,
     const njin::core::njRegistry<njin::core::njMaterial>& material_registry,
-    const njin::core::njRegistry<njin::core::njTexture>& texture_registry) :
+    const njin::core::njRegistry<njin::core::njTexture>& texture_registry,
+    const njin::core::njRegistry<njin::core::njSkeleton>& skeleton_registry,
+    const njin::core::njRegistry<std::vector<njin::core::njAnimation>>&
+    animation_registry) :
         scene_path_{ scene_path },
         mesh_registry_{ &mesh_registry },
         material_registry_{ &material_registry },
-        texture_registry_{ &texture_registry } {}
+        texture_registry_{ &texture_registry },
+        skeleton_registry_{ &skeleton_registry },
+        animation_registry_{ &animation_registry } {}
 
     void njSceneLoader::load(njEngine& engine) {
         std::cout << "Loading scene from: " << scene_path_ << std::endl;
@@ -176,11 +181,201 @@ namespace njin::ecs {
                     };
                 }
 
-                // Final transform: Translation × Rotation × Scale
+                // Final global transform of the ROOT
                 math::njMat4f final_transform = translation * rotation * scale;
 
-                if (archetype_type == "player") {
-                    // Player archetype with physics
+                // CHECK FOR SKELETON
+                // We use mesh_alias to find the skeleton.
+                const core::njSkeleton* skeleton = nullptr;
+                try {
+                    skeleton = skeleton_registry_->get(mesh_alias);
+                } catch (...) {}
+
+                if (archetype_type == "player" && skeleton) {
+                    std::cout << "Loading Animated Player: " << name
+                              << " with skeleton from alias " << mesh_alias
+                              << std::endl;
+
+                    // Root entity is a container for physics/input/animation state.
+                    // The actual mesh is rendered by child skeleton node entities
+                    // using animated poses. Root must NOT have a mesh to avoid
+                    // a static copy masking the animated one.
+                    std::string root_mesh_name = "";
+
+                    ecs::njInputComponent input{};
+
+                    // Parse physics
+                    float mass = 1.0f;
+                    std::string physics_type = "dynamic";
+                    if (entity.HasMember("physics") &&
+                        entity["physics"].IsObject()) {
+                        const auto& phys = entity["physics"];
+                        mass = phys.HasMember("mass") ?
+                               phys["mass"].GetFloat() :
+                               1.0f;
+                        physics_type = phys.HasMember("type") ?
+                                       phys["type"].GetString() :
+                                       "dynamic";
+                    }
+
+                    ecs::njPlayerArchetypeCreateInfo player_info{
+                        .name = name,
+                        .transform = { .transform = final_transform },
+                        .input = input,
+                        // We intentionally might NOT want a mesh on the root if the root is just a container.
+                        // But let's keep it compatible. If the skeleton handles everything, maybe root has no mesh?
+                        // If root_mesh_name is empty, this might crash if njMeshComponent expects string.
+                        .mesh = { .mesh = root_mesh_name,
+                                  .texture_override = "" },
+                        .intent = {},
+                        .physics = { .mass = mass,
+                                     .type = physics_type == "dynamic" ?
+                                             ecs::RigidBodyType::Dynamic :
+                                             ecs::RigidBodyType::Static }
+                    };
+                    ecs::njPlayerArchetype player_archetype{ player_info };
+                    EntityId player_id = engine.add_archetype(player_archetype);
+
+                    // 2. Attach Animation Components to Root
+                    const std::vector<core::njAnimation>* anims = nullptr;
+                    try {
+                        anims = animation_registry_->get(mesh_alias);
+                    } catch (...) {}
+
+                    ecs::njAnimationComponent anim_comp;
+                    anim_comp.animations = anims;
+                    anim_comp.playing =
+                    true;  // Auto-play (single animation, no key bindings yet)
+                    if (anims && !anims->empty()) {
+                        anim_comp.current_animation = anims->at(0).name;
+                        anim_comp.loop = true;
+                    }
+
+                    engine.add_component(player_id, anim_comp);
+
+                    // Add Node Component for Root?
+                    // The Skeleton has 'root_nodes'.
+                    // This "Player" entity is the "Model Root". It corresponds to NO specific node index usually,
+                    // OR it corresponds to a wrapper.
+                    // Let's assume the Player Entity is the PARENT of the skeleton roots.
+                    // So we attach node component to children.
+                    // BUT: njAnimationSystem iterates entities with (njNodeComponent, njAnimationComponent).
+                    // Wait, my design in Step 171 iterates `get_view<njNodeComponent, njAnimationComponent>`.
+                    // This implies the ROOT entity MUST have `njNodeComponent`.
+                    // But which node index?
+                    // GLTF has "scenes" with "nodes". A scene has root nodes.
+                    // The "Model" itself is the scene.
+                    //
+                    // Correction: The `njAnimationComponent` holds the `pose` for ALL nodes.
+                    // It doesn't necessarily need to be a node itself.
+                    // But `njAnimationSystem` REQUIRES `njNodeComponent` to get the `skeleton` pointer!
+                    // `njNodeComponent` holds `njSkeleton*`.
+                    // So yes, we need `njNodeComponent` on the player entity just to point to the Skeleton.
+                    // `node_index` can be -1 (ignored) if it's just a container.
+
+                    ecs::njNodeComponent root_node_comp;
+                    root_node_comp.skeleton = skeleton;
+                    root_node_comp.node_index = -1;
+                    engine.add_component(player_id, root_node_comp);
+
+                    // Add Bindings — auto-bind animations to number keys
+                    ecs::njAnimationBindingsComponent bindings;
+                    if (anims && !anims->empty()) {
+                        SDL_Scancode number_keys[] = {
+                            SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
+                            SDL_SCANCODE_4, SDL_SCANCODE_5, SDL_SCANCODE_6,
+                            SDL_SCANCODE_7, SDL_SCANCODE_8, SDL_SCANCODE_9
+                        };
+                        for (size_t i = 0; i < anims->size() && i < 9; ++i) {
+                            bindings.key_to_animation[number_keys[i]] =
+                            anims->at(i).name;
+                            std::cout << "Animation key " << (i + 1) << " -> \""
+                                      << anims->at(i).name << "\"" << std::endl;
+                        }
+                    }
+                    engine.add_component(player_id, bindings);
+
+                    // 3. Spawning Children (Runtime Hierarchy)
+                    // We traverse the skeleton and spawn entities for each node that has a mesh (or all nodes?)
+                    // If we spawn for ALL nodes, we have a full hierarchy.
+                    // Let's spawn for ALL nodes to support attaching things to bones later.
+
+                    // Recursive helper
+                    // Note: GLTF node transforms are local to parent.
+                    // Our system:
+                    // Root Entity (Player) -> Global Transform
+                    //   -> Skeleton Root Nodes (Child Entities) -> Local Transform relative to Player
+
+                    auto spawn_node =
+                    [&](auto self, int node_idx, int parent_entity_id) -> void {
+                        const auto& node = skeleton->nodes[node_idx];
+                        std::string entity_name = name + "_" + node.name;
+
+                        // Determine mesh — prefix with alias to match registry key format
+                        std::string node_mesh_name;
+                        if (node.mesh_index >= 0 && !node.mesh_name.empty()) {
+                            node_mesh_name = mesh_alias + "-" + node.mesh_name;
+                        }
+
+                        // Create Entity
+                        ecs::njObjectArchetypeCreateInfo node_info{
+                            .name = entity_name,
+                            .transform = ecs::njTransformComponent::make(
+                            0,
+                            0,
+                            0),  // Identity initially, driven by AnimSystem
+                            .mesh = { .mesh = node_mesh_name,
+                                      .texture_override = "" }
+                        };
+
+                        // Note: njObjectArchetype requires a valid mesh name in registry?
+                        // If node has no mesh, we might fail or need empty archetype.
+                        // check if mesh exists
+                        bool has_mesh = !node_mesh_name.empty();
+
+                        EntityId ent_id;
+                        if (has_mesh) {
+                            ecs::njObjectArchetype arch{ node_info,
+                                                         *mesh_registry_ };
+                            ent_id = engine.add_archetype(arch);
+                        } else {
+                            // Create empty entity (no mesh) using add_entity
+                            std::string entity_name = "skeleton_node_" +
+                                                      std::to_string(node_idx);
+                            ent_id = engine.add_entity(entity_name);
+                            // Add basic components
+                            engine
+                            .add_component(ent_id,
+                                           ecs::njTransformComponent::make(0,
+                                                                           0,
+                                                                           0));
+                            // Add Parent component
+                        }
+
+                        // Hierarchy linking
+                        engine.add_component(
+                        ent_id,
+                        ecs::njParentComponent{
+                            .id = static_cast<EntityId>(parent_entity_id) });
+
+                        // Render linking (SkeletonRef)
+                        engine.add_component(ent_id,
+                                             ecs::njSkeletonRefComponent{
+                                                 .root_entity = player_id,
+                                                 .node_index = node_idx });
+
+                        // Recurse
+                        for (int child_idx : node.children) {
+                            self(self, child_idx, ent_id);
+                        }
+                    };
+
+                    for (int root_idx : skeleton->root_nodes) {
+                        spawn_node(spawn_node, root_idx, player_id);
+                    }
+
+                } else if (archetype_type == "player") {
+                    // LEGACY PLAYER PATH (No Skeleton found)
                     float mass = 1.0f;
                     std::string physics_type = "dynamic";
 
@@ -250,6 +445,8 @@ namespace njin::ecs {
 
                 } else {
                     // Default: object archetype (load all meshes for alias)
+                    // TODO: Should we also use skeleton for non-player objects?
+                    // For now, keep legacy behavior for static objects.
                     auto mesh_names =
                     mesh_registry_->get_all_mesh_names(mesh_alias);
                     std::cout << "Found " << mesh_names.size()
@@ -272,7 +469,6 @@ namespace njin::ecs {
                 }
             }
         }
-
         std::cout << "Scene loaded successfully." << std::endl;
     }
 

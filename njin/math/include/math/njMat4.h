@@ -2,6 +2,7 @@
 #include <array>
 
 #include "math.h"
+#include "math/njQuat.h"
 #include "math/njVec3.h"
 #include "math/njVec4.h"
 
@@ -47,11 +48,18 @@ namespace njin::math {
         njMat4(njMat4Type type, const njVec3f& data);
 
         /**
-         * From a unit quaternion
+         * From a unit quaternion (as njVec4f)
          * @param quaternion Unit quaternion
          * @note The imaginary part must be relative to the local coordinate system
          */
         explicit njMat4(const njVec4f& quaternion);
+
+        /**
+         * From a unit quaternion (as njQuat)
+         * @param quaternion Unit quaternion
+         * @note The imaginary part must be relative to the local coordinate system
+         */
+        explicit njMat4(const njQuat<T>& quaternion);
 
         njMat4<T> operator+(const njMat4& other) const;
 

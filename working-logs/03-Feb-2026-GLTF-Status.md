@@ -1,6 +1,6 @@
 # GLTF Enhancement Status
 
-**Date:** 03 February 2026 | **Current Version:** v0.6.3
+**Date:** 07 February 2026 | **Current Version:** v0.6.8 (updated from v0.6.3)
 
 ## 1. Feature Status Matrix
 
@@ -12,7 +12,7 @@
 | 4 | Materials & Textures | ✅ Done | v0.5 | `process_materials()`, `njMaterial.h` |
 | 5 | Node Hierarchy (Baked) | ✅ Done | v0.6.1 | `GLTFAsset.cpp` L475-648 |
 | 6 | Cameras | ⚠️ Partial | — | Via `njSceneLoader`, not GLTF |
-| 7 | Animations & Skinning | ❌ Pending | — | Requires runtime hierarchy |
+| 7 | Animations & Skinning | ✅ Done | v0.6.8 | `njAnimationSystem`, `njSkeleton.h`, `shader.vert` skinning |
 
 ## 2. The Baking Strategy
 
@@ -54,9 +54,13 @@ math::njVec4f r0{ matrix[0], matrix[4], matrix[8], matrix[12] };
 | v0.6.1 | Hierarchy Baking | Node parsing with column→row transpose fix |
 | v0.6.2 | Washed-Out Fix | Removed double gamma, rim lighting |
 | v0.6.3 | Scale Support | Physics system preserving transforms |
+| v0.6.7 | Isometric Camera | Orthographic projection + P/O/I key toggles |
+| v0.6.8 | Animations & GPU Skinning | `njSkeleton`, `njAnimation`, `njAnimationSystem`, joints SSBO, shader skinning |
 
 ## 4. Next Steps
 
-1. **Animation Runtime** — Requires lazy hierarchy (no baking for animated nodes)
+1. ~~**Animation Runtime** — Requires lazy hierarchy (no baking for animated nodes)~~ ✅ Done
 2. **GLTF Cameras** — Parse `cameras[]` array instead of manual JSON
 3. **Morph Targets** — For facial animation / blend shapes
+4. **Multi-Animation Input Bindings** — Wire `njAnimationBindingsComponent` in scene loader for models with multiple animations
+5. **SSBO Migration (Option B)** — Migrate model + joint descriptors from array pattern to single SSBO for macOS compatibility

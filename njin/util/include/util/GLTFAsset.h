@@ -2,8 +2,10 @@
 #include <string>
 #include <vector>
 
+#include "core/njAnimation.h"
 #include "core/njMaterial.h"
 #include "core/njMesh.h"
+#include "core/njSkeleton.h"
 #include "core/njTexture.h"
 #include "math/njMat4.h"
 #include "util/Buffer.h"
@@ -40,18 +42,27 @@ namespace njin::gltf {
          */
         std::vector<core::njTexture> get_textures() const;
 
-        private:
-        struct Node {
-            int mesh_index{ -1 };
-            std::vector<int> children{};
-            math::njMat4f transform{ math::njMat4f::Identity() };
-            std::string name;
-        };
+        /**
+         * Retrieve the animations from this asset
+         * @return Array of animations
+         */
+        std::vector<core::njAnimation> get_animations() const;
 
-        void process_node_hierarchy(int node_index,
-                                    const math::njMat4f& parent_transform,
-                                    const std::vector<Node>& nodes,
-                                    std::vector<core::njMesh>& out_meshes);
+        /**
+         * Retrieve the skeleton (node hierarchy) from this asset
+         * @return Skeleton
+         */
+        core::njSkeleton get_skeleton() const;
+
+        private:
+
+        private:
+        // Internal node struct removal - we now use njSkeleton
+
+        void
+        process_node_hierarchy(int node_index,
+                               int parent_node_index,
+                               const std::vector<core::njSkeletonNode>& nodes);
 
         uint32_t length_{ 0 };
         std::string alias_;
@@ -62,5 +73,7 @@ namespace njin::gltf {
         processed_meshes_{};  // Meshes with transforms baked in
         std::vector<core::njMaterial> materials_{};
         std::vector<core::njTexture> textures_{};
+        std::vector<core::njAnimation> animations_{};
+        core::njSkeleton skeleton_{};
     };
 }  // namespace njin::gltf

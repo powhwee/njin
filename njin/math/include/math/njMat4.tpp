@@ -92,6 +92,13 @@ namespace njin::math {
     }
 
     template<typename T>
+    njMat4<T>::njMat4(const njQuat<T>& quaternion) :
+        njMat4(njVec4f{ quaternion.x,
+                        quaternion.y,
+                        quaternion.z,
+                        quaternion.w }) {}
+
+    template<typename T>
     njMat4<T> njMat4<T>::operator+(const njMat4& other) const {
         njMat4<T> result{};
         for (int i{ 0 }; i < 4; ++i) {

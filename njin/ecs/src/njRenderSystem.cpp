@@ -245,9 +245,67 @@ namespace njin::ecs {
         for (const auto& [entity, view] : all_meshes) {
             auto mesh_component{ std::get<njMeshComponent*>(view) };
 
-            // Calculate proper global transform (handling hierarchy)
-            math::njMat4f global_transform =
-            calculate_model_matrix(entity_manager, entity);
+            // Skip entities with no mesh (e.g. root player entity, bone nodes)
+            if (mesh_component->mesh.empty()) {
+                continue;
+            }
+
+            // Calculate proper global transform (handling hierarchy and animation)
+            math::njMat4f global_transform_mat;
+
+            // Check for Skeleton ref
+            auto skeleton_ref_view =
+            entity_manager.get_view<njSkeletonRefComponent>(entity);
+
+            auto* skeleton_ref =
+            std::get<njSkeletonRefComponent*>(skeleton_ref_view.second);
+
+            bool used_anim = false;
+            if (skeleton_ref) {
+                auto anim_view =
+                entity_manager
+                .get_view<njAnimationComponent>(skeleton_ref->root_entity);
+                auto* anim_comp =
+                std::get<njAnimationComponent*>(anim_view.second);
+                if (anim_comp && skeleton_ref->node_index >= 0 &&
+                    static_cast<size_t>(skeleton_ref->node_index) <
+                    anim_comp->pose.size()) {
+                    global_transform_mat =
+                    anim_comp->pose[skeleton_ref->node_index];
+
+                    // Root transform application?
+                    // The global_transform from pose is relative to the Model Root.
+                    // The Model Root (Player Entity) has its own global transform (Play Space Position).
+                    // So we must multiply: PlayerGlobal * PoseGlobal.
+
+                    math::njMat4f root_transform =
+                    calculate_model_matrix(entity_manager,
+                                           skeleton_ref->root_entity);
+                    global_transform_mat = root_transform *
+                                           global_transform_mat;
+                    used_anim = true;
+
+                    static int render_debug = 0;
+                    if (render_debug++ % 300 == 0) {
+                        std::cout
+                        << "[Render] Animated mesh '" << mesh_component->mesh
+                        << "' node_idx=" << skeleton_ref->node_index
+                        << " pose[0][0]=" << global_transform_mat[0][0]
+                        << " [1][1]=" << global_transform_mat[1][1]
+                        << " [0][3]=" << global_transform_mat[0][3]
+                        << " [1][3]=" << global_transform_mat[1][3]
+                        << " [2][3]=" << global_transform_mat[2][3]
+                        << std::endl;
+                    }
+                }
+            }
+
+            if (!used_anim) {
+                global_transform_mat = calculate_model_matrix(entity_manager,
+                                                              entity);
+            }
+
+            math::njMat4f global_transform = global_transform_mat;
 
             const auto* mesh_data = mesh_registry_->get(mesh_component->mesh);
             if (!mesh_data) {
@@ -288,6 +346,20 @@ namespace njin::ecs {
                                      .base_color_g = base_g,
                                      .base_color_b = base_b,
                                      .base_color_a = base_a };
+
+                // Attach joint matrices for GPU skinning if available
+                if (used_anim) {
+                    auto anim_view =
+                    entity_manager
+                    .get_view<njAnimationComponent>(skeleton_ref->root_entity);
+                    auto* anim_comp =
+                    std::get<njAnimationComponent*>(anim_view.second);
+                    if (anim_comp && !anim_comp->joint_matrices.empty()) {
+                        data.joint_matrices = anim_comp->joint_matrices;
+                        data.is_skinned = true;
+                    }
+                }
+
                 core::Renderable renderable{ .type = RenderType::Mesh,
                                              .data = data };
                 renderables.push_back(renderable);

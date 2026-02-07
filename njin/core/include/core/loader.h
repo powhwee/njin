@@ -1,21 +1,30 @@
 #pragma once
-#include "core/njMesh.h"
+#include "core/njAnimation.h"
 #include "core/njMaterial.h"
+#include "core/njMesh.h"
 #include "core/njRegistry.h"
+#include "core/njSkeleton.h"
 #include "core/njTexture.h"
 #include "util/stb.h"
 
 namespace njin::core {
 
     /**
-     * Loads all assets (meshes, materials, textures) from the glTF files
+     * Loads all assets (meshes, materials, textures, skeletons, animations) from the glTF files
      * specified in a manifest file.
      * @param path Path to the asset manifest file.
      * @param mesh_registry Registry to populate with loaded meshes.
      * @param material_registry Registry to populate with loaded materials.
      * @param texture_registry Registry to populate with textures from the glTFs.
+     * @param skeleton_registry Registry to populate with skeletons.
+     * @param animation_registry Registry to populate with animation bundles.
      */
-    void load_meshes(const std::string& path, njRegistry<njMesh>& mesh_registry, njRegistry<njMaterial>& material_registry, njRegistry<njTexture>& texture_registry);
+    void load_meshes(const std::string& path,
+                     njRegistry<njMesh>& mesh_registry,
+                     njRegistry<njMaterial>& material_registry,
+                     njRegistry<njTexture>& texture_registry,
+                     njRegistry<njSkeleton>& skeleton_registry,
+                     njRegistry<std::vector<njAnimation>>& animation_registry);
 
     /**
    * Loads textures specified in a .textures file into a given texture registry

@@ -14,6 +14,10 @@ This document captures hard-won debugging knowledge. Each bug consumed significa
 - [6. Environment Setup (Recurring)](#6-environment-setup-recurring)
 - [7. Matrix Column/Row Confusion (Recurring)](#7-matrix-columnrow-confusion-v061)
 - [8. Workflow Learnings](#8-workflow-learnings)
+- [9. The "Ghost Key" iso_draw Crash](#9-the-ghost-key-iso_draw-crash-v068)
+- [10. Descriptor Count Sizing](#10-descriptor-count-sizing-v068)
+- [11. Isometric vs Billboard Naming Confusion](#11-isometric-vs-billboard-naming-confusion-v068)
+- [12. Animation System Bootstrap](#12-animation-system-bootstrap-v068)
 
 ---
 
@@ -137,3 +141,60 @@ This is now documented in architecture_review.md as institutional knowledge.
 | **Binary Search** | When N things could cause issue, remove systematically |
 | **Validation Layers** | Always enable—catches null handles, format mismatches |
 | **Data-Driven** | `main.scene` JSON >> hardcoded `main.cpp`—faster iteration |
+
+---
+
+## 9. The "Ghost Key" iso_draw Crash (v0.6.8)
+*Time sink: ~1.5 hours*
+
+| | Details |
+|:--|:--------|
+| **Symptom** | `invalid unordered_map<K, T> key` crash on Frame 1 |
+| **Red Herrings** | Suspected joints SSBO descriptor count (131072 too large), suspected animation system issues |
+| **Root Cause** | `vertex_buffers.load_into_buffer("iso_draw", ...)` called, but `"iso_draw"` key was never registered in `main.cpp`'s `RenderResourceInfos`. The upload line had been intentionally removed at v0.6.7 but was accidentally re-added during animation implementation. |
+| **Fix** | Remove the `iso_draw` buffer upload line (it was already intentionally disabled). |
+| **Files** | `RenderInfos.cpp`, `main.cpp` |
+
+**Debug Process:**
+1. Added `std::cerr` prints before every map-accessed call in `write_data()`
+2. Output showed crash after `"load iso_draw vertices"` — immediately pinpointing the failing key lookup
+3. `git show HEAD:njin/vulkan/src/RenderInfos.cpp` confirmed the upload was already removed at v0.6.7
+
+**Key Learning:** When "restoring" code that was overwritten, always check `git show HEAD:<file>` to see what the committed state actually was. Code may have been intentionally removed.
+
+---
+
+## 10. Descriptor Count Sizing (v0.6.8)
+
+| | Details |
+|:--|:--------|
+| **Issue** | Joints SSBO descriptor count was set to `MAX_JOINTS * MAX_OBJECTS = 128 * 1024 = 131072` |
+| **Risk** | Descriptor pool exhaustion, exceeding GPU limits |
+| **Fix** | Reduced to `MAX_JOINTS = 128` — the Option A descriptor array pattern only needs one array of N entries, not N × M |
+
+**Key Learning:** In Option A (descriptor array), `descriptor_count` = array size, not array size × number of users. Model matrices use 1024 descriptors for 1024 objects; joints should use 128 descriptors for 128 joints, not 128 × 1024.
+
+---
+
+## 11. Isometric vs Billboard Naming Confusion (v0.6.8)
+
+| | Details |
+|:--|:--------|
+| **Confusion** | "Isometric" camera and "iso_draw" billboard pipeline share the "iso" prefix but are completely independent features |
+| **Isometric camera** | Works via orthographic projection matrix on the regular `main_draw` pipeline (P/O/I key toggles) |
+| **Billboard pipeline** | Separate rendering pipeline (`iso_draw`) with own vertex format — infrastructure exists in `config.h` but buffer upload was disabled at v0.6.7 |
+
+**Key Learning:** Name ambiguity between features causes debugging confusion. The isometric camera has nothing to do with the iso_draw billboard pipeline.
+
+---
+
+## 12. Animation System Bootstrap (v0.6.8)
+
+| | Details |
+|:--|:--------|
+| **Issue** | Animation auto-plays on launch instead of waiting for key press |
+| **Cause** | `njSceneLoader` sets `anim_comp.playing = true` but never creates `njAnimationBindingsComponent` (no key bindings) |
+| **Decision** | Kept `playing = true` because the test model has only 1 animation and no key bindings are configured |
+
+**Key Learning:** When building an input-driven system, verify the full chain: input system → bindings component → state component. If bindings are missing, the input system is dead code and the default state determines behavior.
+
