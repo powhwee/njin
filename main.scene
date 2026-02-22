@@ -12,16 +12,15 @@
   },
   "entities": [
     {
-      "name": "cube_model",
-      "mesh_alias": "cube",
-      "position": [5.0, 0.0, 0.0],
-      "rotation_x_degrees": -90.0
+      "name": "chesspiece_model",
+      "mesh_alias": "chesspiece",
+      "position": [5.0, 1.0, 0.0]
     },
     {
-      "name": "player",
+      "name": "player_model",
       "archetype": "player",
       "mesh_alias": "player",
-      "position": [0.0, 1.0, 0.0],
+      "position": [0.0, 0.0, 0.0],
       "scale": 6.0,
       "physics": {
         "mass": 1.0,

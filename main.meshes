@@ -1,8 +1,8 @@
 {
     "meshes" : [
         {
-            "name": "cube",
-            "path": "mesh/cube.glb"
+            "name": "chesspiece",
+            "path": "mesh/chesspiece.glb"
         } ,
         {
             "name": "player",
